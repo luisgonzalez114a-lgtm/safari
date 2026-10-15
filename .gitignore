@@ -1,0 +1,27 @@
+# Maven build output
+/target/
+/out/
+
+# Local IDE settings
+.classpath
+.project
+.settings/
+.vscode/
+
+# Local Maven distribution and archives
+/apache-maven-3.9.9/
+/apache-maven-3.9.9-bin.zip
+/lib/
+
+# Local modernization logs and generated artifacts
+/.github/modernize/
+
+# Separate nested repository
+/Productos/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log

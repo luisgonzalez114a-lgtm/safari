@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('roles')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Roles</h1>
+            <small>Roles disponibles en el sistema</small>
+        </div>
+    </header>
+
+    <section class="panel">
+        <h2>Crear rol</h2>
+        <p class="muted-copy">Usa `VENDEDOR` para personal de caja; `ADMIN` puede administrar usuarios, catálogos y productos.</p>
+        <form th:action="@{/roles/guardar}" method="post" class="form-grid">
+            <div class="role-create-row">
+                <div class="field">
+                    <label for="nombreRol">Nombre del rol</label>
+                    <input id="nombreRol" type="text" name="nombre" placeholder="Ej. SUPERVISOR" maxlength="50" required />
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar rol</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel margin-top">
+        <h2>Roles registrados</h2>
+        <div class="table-wrap">
+            <table class="table table-vcenter data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Rol</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(roles)}">
+                    <td class="empty-state" colspan="2">Aún no hay roles registrados.</td>
+                </tr>
+                <tr th:each="r : ${roles}">
+                    <td th:text="${r.id}"></td>
+                    <td>
+                        <strong th:text="${r.nombre}"></strong>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'ADMIN')}">Administración completa</span>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR')}">Registrar entradas y ventas</span>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'USER')}">Consulta del catálogo</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>

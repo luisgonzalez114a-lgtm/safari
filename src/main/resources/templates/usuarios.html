@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('users')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Gestión de usuarios</h1>
+            <small>Personal y acceso al sistema</small>
+        </div>
+    </header>
+
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <div class="two-col">
+        <section class="panel">
+            <h2>Crear usuario</h2>
+            <p class="muted-copy">Asigna `VENDEDOR` al personal de caja. Las contraseñas se guardan cifradas.</p>
+            <form th:action="@{/usuarios/guardar}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="nombre">Nombre completo</label>
+                    <input id="nombre" type="text" name="nombre" placeholder="Nombre completo" required />
+                </div>
+                <div class="field">
+                    <label for="correo">Correo</label>
+                    <input id="correo" type="email" name="correo" placeholder="persona@correo.com" required />
+                </div>
+                <div class="field">
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" type="tel" name="telefono" placeholder="Opcional" />
+                </div>
+                <div class="field">
+                    <label for="clave">Contraseña</label>
+                    <input id="clave" type="password" name="clave" placeholder="Contraseña" required />
+                </div>
+                <div class="field">
+                    <label for="rolId">Rol</label>
+                    <select id="rolId" name="rolId" required>
+                        <option value="">Selecciona rol</option>
+                        <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar usuario</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Asignar rol a usuario</h2>
+            <form th:action="@{/usuarios/rol}" method="post" class="form-grid">
+                <div class="field">
+                    <label for="usuarioId">Usuario</label>
+                    <select id="usuarioId" name="usuarioId" required>
+                        <option value="">Selecciona usuario</option>
+                        <option th:each="u : ${usuarios}" th:value="${u.id}" th:text="${u.nombre + ' (' + u.correo + ')'}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="nuevoRolId">Nuevo rol</label>
+                    <select id="nuevoRolId" name="rolId" required>
+                        <option value="">Selecciona rol</option>
+                        <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar rol</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="panel">
+        <h2>Usuarios registrados</h2>
+        <div class="table-wrap">
+            <table class="table table-vcenter data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
+                    <th>Estatus</th>
+                    <th>Administrar</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(usuarios)}">
+                    <td class="empty-state" colspan="7">Todavía no hay usuarios registrados.</td>
+                </tr>
+                <tr th:each="u : ${usuarios}">
+                    <td th:text="${u.id}"></td>
+                    <td th:text="${u.nombre}"></td>
+                    <td th:text="${u.correo}"></td>
+                    <td th:text="${u.telefono}"></td>
+                    <td th:text="${u.rol != null ? u.rol.nombre : 'Sin rol'}"></td>
+                    <td>
+                        <span class="badge success" th:if="${u.estatus == 1}">Activo</span>
+                        <span class="badge warning" th:unless="${u.estatus == 1}">Inactivo</span>
+                    </td>
+                    <td class="user-actions">
+                        <details>
+                            <summary class="btn btn-secondary">Editar</summary>
+                            <form th:action="@{/usuarios/actualizar}" method="post" class="user-edit-form">
+                                <input type="hidden" name="usuarioId" th:value="${u.id}">
+                                <label>Nombre<input name="nombre" th:value="${u.nombre}" required></label>
+                                <label>Correo<input type="email" name="correo" th:value="${u.correo}" required></label>
+                                <label>Teléfono<input name="telefono" th:value="${u.telefono}"></label>
+                                <label>Nueva contraseña<input type="password" name="clave" placeholder="Dejar vacía para mantenerla"></label>
+                                <label>Rol<select name="rolId" required>
+                                    <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}" th:selected="${u.rol != null and r.id == u.rol.id}"></option>
+                                </select></label>
+                                <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                            </form>
+                        </details>
+                        <form th:if="${u.id != usuarioLogueado.id}" th:action="@{/usuarios/eliminar}" method="post"
+                              onsubmit="return confirm('¿Eliminar este usuario? Si ya registró movimientos, la base de datos impedirá borrarlo.');">
+                            <input type="hidden" name="usuarioId" th:value="${u.id}">
+                            <button class="btn btn-danger" type="submit">Eliminar</button>
+                        </form>
+                        <span th:if="${u.id == usuarioLogueado.id}" class="badge warning">Sesión actual</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>

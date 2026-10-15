@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogos - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.3}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('catalogs')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Catálogos de SAFARI</h1>
+            <small>Proveedores, marcas y categorías</small>
+        </div>
+    </header>
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <div class="two-col">
+        <section class="panel">
+            <h2>Nuevo proveedor</h2>
+            <form th:action="@{/catalogos/proveedores}" method="post" class="form-grid">
+                <div class="field"><label for="proveedorNombre">Nombre</label><input id="proveedorNombre" name="nombre" required maxlength="100"></div>
+                <div class="field"><label for="rifNit">RIF / NIT</label><input id="rifNit" name="rifNit" maxlength="50"></div>
+                <div class="field"><label for="proveedorTelefono">Teléfono</label><input id="proveedorTelefono" name="telefono" maxlength="20"></div>
+                <div class="field"><label for="proveedorCorreo">Correo</label><input id="proveedorCorreo" type="email" name="correo" maxlength="100"></div>
+                <div class="field"><label for="direccion">Dirección</label><input id="direccion" name="direccion"></div>
+                <button class="btn btn-primary" type="submit">Guardar proveedor</button>
+            </form>
+            <h3 class="subheading">Proveedores registrados</h3>
+            <div class="catalog-list">
+                <p th:if="${#lists.isEmpty(proveedores)}" class="empty-list-item">Aún no hay proveedores registrados.</p>
+                <article class="catalog-item" th:each="p : ${proveedores}">
+                    <div class="catalog-item-heading">
+                        <strong th:text="${p.nombre}">Proveedor</strong>
+                        <div class="catalog-item-actions">
+                            <details>
+                                <summary class="btn btn-secondary">Editar</summary>
+                                <form th:action="@{/catalogos/proveedores/actualizar}" method="post" class="catalog-edit-form">
+                                    <input type="hidden" name="id" th:value="${p.id}">
+                                    <div class="field"><label th:for="${'proveedorNombre-' + p.id}">Nombre</label><input th:id="${'proveedorNombre-' + p.id}" name="nombre" th:value="${p.nombre}" required maxlength="100"></div>
+                                    <div class="field"><label th:for="${'proveedorRif-' + p.id}">RIF / NIT</label><input th:id="${'proveedorRif-' + p.id}" name="rifNit" th:value="${p.rifNit}" maxlength="50"></div>
+                                    <div class="field"><label th:for="${'proveedorTelefono-' + p.id}">Teléfono</label><input th:id="${'proveedorTelefono-' + p.id}" name="telefono" th:value="${p.telefono}" maxlength="20"></div>
+                                    <div class="field"><label th:for="${'proveedorCorreo-' + p.id}">Correo</label><input th:id="${'proveedorCorreo-' + p.id}" type="email" name="correo" th:value="${p.correo}" maxlength="100"></div>
+                                    <div class="field"><label th:for="${'proveedorDireccion-' + p.id}">Dirección</label><input th:id="${'proveedorDireccion-' + p.id}" name="direccion" th:value="${p.direccion}"></div>
+                                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                                </form>
+                            </details>
+                            <form th:action="@{/catalogos/proveedores/eliminar}" method="post"
+                                  onsubmit="return confirm('¿Eliminar este proveedor? No se puede borrar si tiene entradas registradas.');">
+                                <input type="hidden" name="id" th:value="${p.id}">
+                                <button class="btn btn-danger" type="submit">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                    <small th:text="${p.rifNit != null ? 'RIF / NIT: ' + p.rifNit : 'Sin RIF / NIT'}">RIF / NIT</small>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Nueva marca</h2>
+            <form th:action="@{/catalogos/marcas}" method="post" class="form-grid">
+                <div class="field"><label for="marcaNombre">Nombre de la marca</label><input id="marcaNombre" name="nombre" required maxlength="50"></div>
+                <button class="btn btn-primary" type="submit">Guardar marca</button>
+            </form>
+            <h3 class="subheading">Marcas registradas</h3>
+            <div class="catalog-list">
+                <p th:if="${#lists.isEmpty(marcas)}" class="empty-list-item">Aún no hay marcas registradas.</p>
+                <article class="catalog-item catalog-item-compact" th:each="m : ${marcas}">
+                    <strong th:text="${m.nombre}">Marca</strong>
+                    <div class="catalog-item-actions">
+                        <details>
+                            <summary class="btn btn-secondary">Editar</summary>
+                            <form th:action="@{/catalogos/marcas/actualizar}" method="post" class="catalog-edit-form">
+                                <input type="hidden" name="id" th:value="${m.id}">
+                                <div class="field"><label th:for="${'marcaNombre-' + m.id}">Nombre de la marca</label><input th:id="${'marcaNombre-' + m.id}" name="nombre" th:value="${m.nombre}" required maxlength="50"></div>
+                                <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                            </form>
+                        </details>
+                        <form th:action="@{/catalogos/marcas/eliminar}" method="post"
+                              onsubmit="return confirm('¿Eliminar esta marca? No se puede borrar si está asignada a productos.');">
+                            <input type="hidden" name="id" th:value="${m.id}">
+                            <button class="btn btn-danger" type="submit">Eliminar</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+
+            <h2 class="section-gap">Nueva categoría</h2>
+            <form th:action="@{/catalogos/categorias}" method="post" class="form-grid">
+                <div class="field"><label for="categoriaNombre">Nombre de la categoría</label><input id="categoriaNombre" name="nombre" required maxlength="50"></div>
+                <div class="field"><label for="categoriaDescripcion">Descripción</label><input id="categoriaDescripcion" name="descripcion"></div>
+                <button class="btn btn-primary" type="submit">Guardar categoría</button>
+            </form>
+            <h3 class="subheading">Categorías registradas</h3>
+            <div class="catalog-list">
+                <p th:if="${#lists.isEmpty(categorias)}" class="empty-list-item">Aún no hay categorías registradas.</p>
+                <article class="catalog-item catalog-item-compact" th:each="c : ${categorias}">
+                    <div>
+                        <strong th:text="${c.nombre}">Categoría</strong>
+                        <small th:if="${c.descripcion != null and !c.descripcion.isBlank()}" th:text="${c.descripcion}">Descripción</small>
+                    </div>
+                    <div class="catalog-item-actions">
+                        <details>
+                            <summary class="btn btn-secondary">Editar</summary>
+                            <form th:action="@{/catalogos/categorias/actualizar}" method="post" class="catalog-edit-form">
+                                <input type="hidden" name="id" th:value="${c.id}">
+                                <div class="field"><label th:for="${'categoriaNombre-' + c.id}">Nombre de la categoría</label><input th:id="${'categoriaNombre-' + c.id}" name="nombre" th:value="${c.nombre}" required maxlength="50"></div>
+                                <div class="field"><label th:for="${'categoriaDescripcion-' + c.id}">Descripción</label><input th:id="${'categoriaDescripcion-' + c.id}" name="descripcion" th:value="${c.descripcion}"></div>
+                                <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                            </form>
+                        </details>
+                        <form th:action="@{/catalogos/categorias/eliminar}" method="post"
+                              onsubmit="return confirm('¿Eliminar esta categoría? No se puede borrar si está asignada a productos.');">
+                            <input type="hidden" name="id" th:value="${c.id}">
+                            <button class="btn btn-danger" type="submit">Eliminar</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>

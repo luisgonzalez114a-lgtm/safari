@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFARI · Acceso</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+</head>
+<body class="login-page">
+<div class="login-card">
+    <div class="login-mark" aria-hidden="true">S</div>
+    <div class="login-header">
+        <span class="eyebrow">SISTEMA DE INVENTARIO</span>
+        <h2>Bienvenido</h2>
+        <p>Inicia sesión para administrar tu negocio.</p>
+    </div>
+
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+
+    <form th:action="@{/login}" method="post" class="form-block">
+        <div class="field">
+            <label for="correo">Correo electrónico</label>
+            <input id="correo" class="form-input" type="email" name="correo" placeholder="admin@safari.com" autocomplete="username" required />
+        </div>
+        <div class="field">
+            <label for="clave">Contraseña</label>
+            <input id="clave" class="form-input" type="password" name="clave" placeholder="Tu contraseña" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="login-button">Entrar a SAFARI <span aria-hidden="true">→</span></button>
+    </form>
+
+    <a class="btn btn-secondary public-catalog-link" th:href="@{/}">Ver productos disponibles</a>
+
+    <details class="demo-access">
+        <summary>¿Primera vez? Ver acceso de demostración</summary>
+        <p>Administrador: <strong>admin@safari.com</strong><br>Contraseña: <strong>admin123</strong></p>
+        <p>Vendedor de prueba: <strong>vendedor@safari.com</strong><br>Contraseña: <strong>vendedor123</strong></p>
+        <p>Estas cuentas se crean automáticamente solo si no existen. Cambia sus contraseñas antes de usar el sistema con datos reales.</p>
+    </details>
+    <p class="login-footer">SAFARI · Control de inventario</p>
+</div>
+</body>
+</html>

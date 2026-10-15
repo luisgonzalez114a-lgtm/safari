@@ -1,0 +1,27 @@
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="sidebar(activePage)" class="safari-sidebar" aria-label="Navegación principal">
+    <a class="sidebar-brand" th:href="@{/}">
+        <span class="sidebar-mark" aria-hidden="true">S</span>
+        <span><strong>SAFARI</strong><small>Control de inventario</small></span>
+    </a>
+
+    <div class="sidebar-label">MENÚ</div>
+    <a class="sidebar-link" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
+    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and (#strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN') or #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'VENDEDOR'))}"
+       th:href="@{/entradas}" th:classappend="${activePage == 'entries'} ? ' active' : ''">Entradas</a>
+    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and (#strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN') or #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'VENDEDOR'))}"
+       th:href="@{/salidas}" th:classappend="${activePage == 'sales'} ? ' active' : ''">Ventas y salidas</a>
+
+    <div class="sidebar-label" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}">ADMINISTRACIÓN</div>
+    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
+       th:href="@{/catalogos}" th:classappend="${activePage == 'catalogs'} ? ' active' : ''">Proveedores y catálogos</a>
+    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
+       th:href="@{/usuarios}" th:classappend="${activePage == 'users'} ? ' active' : ''">Usuarios</a>
+    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
+       th:href="@{/roles}" th:classappend="${activePage == 'roles'} ? ' active' : ''">Roles</a>
+
+    <div class="sidebar-footer">
+        <span class="sidebar-user" th:text="${usuarioLogueado.nombre}">Usuario</span>
+        <span class="sidebar-role" th:text="${usuarioLogueado.rol != null ? usuarioLogueado.rol.nombre : 'Sin rol'}">ADMIN</span>
+        <a class="sidebar-logout" th:href="@{/logout}">Cerrar sesión</a>
+    </div>
+</nav>

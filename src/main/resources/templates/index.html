@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+</head>
+<body>
+<div class="app-shell" th:classappend="${esCliente} ? ' public-shell' : ''">
+    <th:block th:if="${!esCliente}">
+        <aside th:replace="~{fragments/navigation :: sidebar('inventory')}"></aside>
+    </th:block>
+    <header class="topbar">
+        <div class="brand">
+            <h1>SAFARI</h1>
+            <small th:text="${esCliente} ? 'Catálogo de productos' : 'Inventario · entradas · salidas'">Inventario</small>
+        </div>
+        <div class="user-meta" th:if="${esCliente and usuarioLogueado != null}">
+            <a class="btn btn-secondary" th:href="@{/logout}">Cerrar sesión</a>
+        </div>
+        <div class="user-meta" th:unless="${usuarioLogueado != null}">
+            <a class="btn btn-primary" th:href="@{/login}">Acceso del personal</a>
+        </div>
+    </header>
+
+    <div class="notice" th:if="${esCliente}">
+        Catálogo de consulta: revisa productos, precios y existencias. Para comprar, visita el mostrador.
+    </div>
+
+    <section class="hero-grid">
+        <div class="stat-card">
+            <span class="stat-label">Productos</span>
+            <span class="stat-value" th:text="${#lists.size(productos)}">0</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Control</span>
+            <span class="stat-value">Stock</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Base de datos</span>
+            <span class="stat-value">SAFARI</span>
+        </div>
+    </section>
+
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+
+    <div class="layout">
+        <aside class="panel" th:if="${esAdmin}">
+            <h2 th:text="${producto.id != null} ? 'Editar producto' : 'Nuevo producto'">Nuevo producto</h2>
+            <form th:action="@{/productos/guardar}" th:object="${producto}" method="post" class="form-grid">
+                <input type="hidden" th:field="*{id}" />
+                <div class="field">
+                    <label>Código</label>
+                    <input type="text" th:field="*{codigo}" required maxlength="50" />
+                </div>
+                <div class="field">
+                    <label>Nombre</label>
+                    <input type="text" th:field="*{nombre}" required />
+                </div>
+                <div class="field">
+                    <label>Descripción</label>
+                    <input type="text" th:field="*{descripcion}" />
+                </div>
+                <div class="field">
+                    <label for="idMarca">Marca</label>
+                    <select id="idMarca" th:field="*{idMarca}">
+                        <option value="">Sin marca</option>
+                        <option th:each="marca : ${marcas}" th:value="${marca.id}" th:text="${marca.nombre}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="idCategoria">Categoría</label>
+                    <select id="idCategoria" th:field="*{idCategoria}">
+                        <option value="">Sin categoría</option>
+                        <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nombre}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Precio compra</label>
+                    <input type="number" step="0.01" th:field="*{precioCompra}" required />
+                </div>
+                <div class="field">
+                    <label>Precio actual / venta</label>
+                    <input type="number" step="0.01" min="0" th:field="*{precioActual}" required />
+                </div>
+                <div class="field">
+                    <label>Stock actual</label>
+                    <input type="number" min="0" th:field="*{stockActual}" required />
+                </div>
+                <div class="field">
+                    <label>Stock mínimo</label>
+                    <input type="number" min="0" th:field="*{stockMinimo}" required />
+                </div>
+                <div class="button-row">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <a class="btn btn-danger" th:href="@{/}">Cancelar</a>
+                </div>
+            </form>
+        </aside>
+
+        <main class="panel">
+            <h2 class="section-title">Listado de productos</h2>
+            <div class="table-wrap">
+                <table class="table table-vcenter data-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio actual</th>
+                        <th>Stock</th>
+                        <th th:if="${esAdmin}">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(productos)}">
+                        <td class="empty-state" th:colspan="${esAdmin} ? 7 : 6">Todavía no hay productos.</td>
+                    </tr>
+                    <tr th:each="p : ${productos}">
+                        <td th:text="${p.id}"></td>
+                        <td th:text="${p.codigo}"></td>
+                        <td th:text="${p.nombre}"></td>
+                        <td th:text="${p.descripcion != null and !p.descripcion.isBlank() ? p.descripcion : '—'}"></td>
+                        <td class="price-cell" th:text="${#numbers.formatDecimal(p.precioActual, 1, 2)}"></td>
+                        <td><span class="stock-pill" th:classappend="${p.stockActual <= p.stockMinimo} ? ' stock-low' : ''" th:text="${p.stockActual}"></span></td>
+                        <td th:if="${esAdmin}">
+                            <a class="btn btn-primary" th:href="@{/productos/editar/{id}(id=${p.id})}">Editar</a>
+                            <form th:action="@{/productos/eliminar/{id}(id=${p.id})}" method="post" class="inline-action"
+                                  onsubmit="return confirm('¿Eliminar este producto? Los productos con movimientos no se pueden borrar.');">
+                                <button class="btn btn-danger" type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html>
