@@ -91,7 +91,7 @@ public class DataSeeder {
                 admin.setTelefono("0000000000");
                 admin.setCorreo("admin@safari.com");
                 admin.setClave(passwordEncoder.encode("admin123"));
-                admin.setRol(adminRol);
+                admin.setRoles(java.util.Set.of(adminRol));
                 admin.setEstatus(1);
                 usuarioRepository.save(admin);
             }
@@ -102,7 +102,7 @@ public class DataSeeder {
                 usuario.setTelefono("1111111111");
                 usuario.setCorreo("usuario@safari.com");
                 usuario.setClave(passwordEncoder.encode("user123"));
-                usuario.setRol(userRol);
+                usuario.setRoles(java.util.Set.of(userRol));
                 usuario.setEstatus(1);
                 usuarioRepository.save(usuario);
             }
@@ -113,7 +113,7 @@ public class DataSeeder {
                 vendedor.setTelefono("555-0101");
                 vendedor.setCorreo("vendedor@safari.com");
                 vendedor.setClave(passwordEncoder.encode("vendedor123"));
-                vendedor.setRol(vendedorRol);
+                vendedor.setRoles(java.util.Set.of(vendedorRol));
                 vendedor.setEstatus(1);
                 usuarioRepository.save(vendedor);
             }

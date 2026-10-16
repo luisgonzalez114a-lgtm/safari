@@ -1,8 +1,11 @@
 package com.example.productos.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "usuarios")
@@ -24,9 +27,11 @@ public class Usuario {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String clave;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_rol", referencedColumnName = "id")
-    private Rol rol;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "usuario_roles",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "rol_id"))
+    private Set<Rol> roles = new LinkedHashSet<>();
 
     @Column
     private Integer estatus = 1;
@@ -76,12 +81,26 @@ public class Usuario {
         this.clave = clave;
     }
 
-    public Rol getRol() {
-        return rol;
+    public Set<Rol> getRoles() {
+        return roles;
     }
 
-    public void setRol(Rol rol) {
-        this.rol = rol;
+    public void setRoles(Set<Rol> roles) {
+        this.roles = roles == null ? new LinkedHashSet<>() : new LinkedHashSet<>(roles);
+    }
+
+    public boolean tieneRol(String nombreRol) {
+        return nombreRol != null && roles.stream()
+                .anyMatch(rol -> rol.getNombre() != null && rol.getNombre().equalsIgnoreCase(nombreRol));
+    }
+
+    @JsonIgnore
+    public String getNombresRoles() {
+        return roles.isEmpty() ? "Sin rol" : roles.stream()
+                .map(Rol::getNombre)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .reduce((first, second) -> first + ", " + second)
+                .orElse("Sin rol");
     }
 
     public Integer getEstatus() {

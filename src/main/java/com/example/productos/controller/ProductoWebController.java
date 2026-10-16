@@ -106,11 +106,7 @@ public class ProductoWebController {
     }
 
     private boolean esAdmin(Usuario usuario) {
-        if (usuario == null || usuario.getRol() == null || usuario.getRol().getNombre() == null) {
-            return false;
-        }
-        return usuario.getRol().getNombre().equalsIgnoreCase("ADMIN") ||
-                usuario.getRol().getNombre().equalsIgnoreCase("admin");
+        return usuario != null && usuario.tieneRol("ADMIN");
     }
 
     private boolean datosProductoValidos(Producto producto) {
@@ -143,7 +139,6 @@ public class ProductoWebController {
     }
 
     private boolean esVendedor(Usuario usuario) {
-        return usuario != null && usuario.getRol() != null && usuario.getRol().getNombre() != null
-                && usuario.getRol().getNombre().equalsIgnoreCase("VENDEDOR");
+        return usuario != null && usuario.tieneRol("VENDEDOR");
     }
 }

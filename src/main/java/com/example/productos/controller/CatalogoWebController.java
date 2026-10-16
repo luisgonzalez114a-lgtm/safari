@@ -38,12 +38,29 @@ public class CatalogoWebController {
     }
 
     @GetMapping("/catalogos")
-    public String catalogos(HttpSession session, Model model) {
+    public String catalogos() {
+        return "redirect:/catalogos/proveedores";
+    }
+
+    @GetMapping("/catalogos/proveedores")
+    public String proveedores(HttpSession session, Model model) {
+        model.addAttribute("usuarioLogueado", session.getAttribute("usuarioLogueado"));
+        model.addAttribute("proveedores", proveedorRepository.findAll());
+        return "proveedores";
+    }
+
+    @GetMapping("/catalogos/marcas")
+    public String marcas(HttpSession session, Model model) {
+        model.addAttribute("usuarioLogueado", session.getAttribute("usuarioLogueado"));
+        model.addAttribute("marcas", marcaRepository.findAll());
+        return "marcas";
+    }
+
+    @GetMapping("/catalogos/categorias")
+    public String categorias(HttpSession session, Model model) {
         model.addAttribute("usuarioLogueado", session.getAttribute("usuarioLogueado"));
         model.addAttribute("categorias", categoriaRepository.findAll());
-        model.addAttribute("marcas", marcaRepository.findAll());
-        model.addAttribute("proveedores", proveedorRepository.findAll());
-        return "catalogos";
+        return "categorias";
     }
 
     @PostMapping("/catalogos/categorias")
@@ -52,27 +69,27 @@ public class CatalogoWebController {
                                  RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre de la categoría es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/categorias";
         }
         Categoria categoria = new Categoria();
         categoria.setNombre(nombre.trim());
         categoria.setDescripcion(limpiar(descripcion));
         categoriaRepository.save(categoria);
         attributes.addFlashAttribute("mensaje", "Categoría guardada.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/categorias";
     }
 
     @PostMapping("/catalogos/marcas")
     public String crearMarca(@RequestParam String nombre, RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre de la marca es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/marcas";
         }
         Marca marca = new Marca();
         marca.setNombre(nombre.trim());
         marcaRepository.save(marca);
         attributes.addFlashAttribute("mensaje", "Marca guardada.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/marcas";
     }
 
     @PostMapping("/catalogos/proveedores")
@@ -84,7 +101,7 @@ public class CatalogoWebController {
                                  RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre del proveedor es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/proveedores";
         }
         Proveedor proveedor = new Proveedor();
         proveedor.setNombre(nombre.trim());
@@ -94,7 +111,7 @@ public class CatalogoWebController {
         proveedor.setDireccion(limpiar(direccion));
         proveedorRepository.save(proveedor);
         attributes.addFlashAttribute("mensaje", "Proveedor guardado.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/proveedores";
     }
 
     @PostMapping("/catalogos/categorias/actualizar")
@@ -104,18 +121,18 @@ public class CatalogoWebController {
                                       RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre de la categoría es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/categorias";
         }
         Categoria categoria = categoriaRepository.findById(id).orElse(null);
         if (categoria == null) {
             attributes.addFlashAttribute("error", "No se encontró la categoría que intentas editar.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/categorias";
         }
         categoria.setNombre(nombre.trim());
         categoria.setDescripcion(limpiar(descripcion));
         categoriaRepository.save(categoria);
         attributes.addFlashAttribute("mensaje", "Categoría actualizada.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/categorias";
     }
 
     @PostMapping("/catalogos/marcas/actualizar")
@@ -124,17 +141,17 @@ public class CatalogoWebController {
                                   RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre de la marca es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/marcas";
         }
         Marca marca = marcaRepository.findById(id).orElse(null);
         if (marca == null) {
             attributes.addFlashAttribute("error", "No se encontró la marca que intentas editar.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/marcas";
         }
         marca.setNombre(nombre.trim());
         marcaRepository.save(marca);
         attributes.addFlashAttribute("mensaje", "Marca actualizada.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/marcas";
     }
 
     @PostMapping("/catalogos/proveedores/actualizar")
@@ -147,12 +164,12 @@ public class CatalogoWebController {
                                       RedirectAttributes attributes) {
         if (nombre == null || nombre.isBlank()) {
             attributes.addFlashAttribute("error", "El nombre del proveedor es obligatorio.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/proveedores";
         }
         Proveedor proveedor = proveedorRepository.findById(id).orElse(null);
         if (proveedor == null) {
             attributes.addFlashAttribute("error", "No se encontró el proveedor que intentas editar.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/proveedores";
         }
         proveedor.setNombre(nombre.trim());
         proveedor.setRifNit(limpiar(rifNit));
@@ -161,43 +178,44 @@ public class CatalogoWebController {
         proveedor.setDireccion(limpiar(direccion));
         proveedorRepository.save(proveedor);
         attributes.addFlashAttribute("mensaje", "Proveedor actualizado.");
-        return "redirect:/catalogos";
+        return "redirect:/catalogos/proveedores";
     }
 
     @PostMapping("/catalogos/categorias/eliminar")
     public String eliminarCategoria(@RequestParam int id, RedirectAttributes attributes) {
         if (productoRepository.existsByIdCategoria(id)) {
             attributes.addFlashAttribute("error", "No se puede eliminar la categoría porque está asignada a productos.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/categorias";
         }
-        return eliminarCatalogo(categoriaRepository, id, "categoría", attributes);
+        return eliminarCatalogo(categoriaRepository, id, "categoría", "/catalogos/categorias", attributes);
     }
 
     @PostMapping("/catalogos/marcas/eliminar")
     public String eliminarMarca(@RequestParam int id, RedirectAttributes attributes) {
         if (productoRepository.existsByIdMarca(id)) {
             attributes.addFlashAttribute("error", "No se puede eliminar la marca porque está asignada a productos.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/marcas";
         }
-        return eliminarCatalogo(marcaRepository, id, "marca", attributes);
+        return eliminarCatalogo(marcaRepository, id, "marca", "/catalogos/marcas", attributes);
     }
 
     @PostMapping("/catalogos/proveedores/eliminar")
     public String eliminarProveedor(@RequestParam int id, RedirectAttributes attributes) {
         if (entradaRepository.existsByProveedor_Id(id)) {
             attributes.addFlashAttribute("error", "No se puede eliminar el proveedor porque tiene entradas registradas.");
-            return "redirect:/catalogos";
+            return "redirect:/catalogos/proveedores";
         }
-        return eliminarCatalogo(proveedorRepository, id, "proveedor", attributes);
+        return eliminarCatalogo(proveedorRepository, id, "proveedor", "/catalogos/proveedores", attributes);
     }
 
     private <T> String eliminarCatalogo(org.springframework.data.jpa.repository.JpaRepository<T, Integer> repository,
                                         int id,
                                         String tipo,
+                                        String returnPath,
                                         RedirectAttributes attributes) {
         if (!repository.existsById(id)) {
             attributes.addFlashAttribute("error", "No se encontró el " + tipo + " que intentas eliminar.");
-            return "redirect:/catalogos";
+            return "redirect:" + returnPath;
         }
         try {
             repository.deleteById(id);
@@ -207,7 +225,7 @@ public class CatalogoWebController {
             attributes.addFlashAttribute("error",
                     "No se puede eliminar el " + tipo + " porque está relacionado con productos o movimientos.");
         }
-        return "redirect:/catalogos";
+        return "redirect:" + returnPath;
     }
 
     private String limpiar(String valor) {

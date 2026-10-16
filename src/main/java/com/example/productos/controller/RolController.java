@@ -38,8 +38,12 @@ public class RolController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
-        if (!rolRepository.existsById(id)) {
+        Rol rol = rolRepository.findById(id).orElse(null);
+        if (rol == null) {
             return ResponseEntity.notFound().build();
+        }
+        if (!rol.getUsuarios().isEmpty()) {
+            return ResponseEntity.status(409).build();
         }
         rolRepository.deleteById(id);
         return ResponseEntity.noContent().build();

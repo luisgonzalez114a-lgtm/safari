@@ -17,12 +17,19 @@ CREATE TABLE `usuarios` (
   `telefono` VARCHAR(20) DEFAULT NULL,
   `correo` VARCHAR(100) DEFAULT NULL,
   `clave` VARCHAR(255) NOT NULL,
-  `id_rol` INT DEFAULT NULL,
   `estatus` INT DEFAULT 1,
   `fecha_registro` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_usuarios_rol`
-    FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id`)
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `usuario_roles` (
+  `usuario_id` INT NOT NULL,
+  `rol_id` INT NOT NULL,
+  PRIMARY KEY (`usuario_id`, `rol_id`),
+  CONSTRAINT `fk_usuario_roles_usuario`
+    FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_usuario_roles_rol`
+    FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `categorias` (

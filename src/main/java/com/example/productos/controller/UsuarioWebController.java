@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 @Controller
 public class UsuarioWebController {
     private static final int USUARIOS_POR_PAGINA = 9;
@@ -61,23 +65,23 @@ public class UsuarioWebController {
                                  @RequestParam String correo,
                                  @RequestParam String clave,
                                  @RequestParam(required = false) String telefono,
-                                 @RequestParam(required = false) Integer rolId,
+                                 @RequestParam(required = false) List<Integer> rolesIds,
                                  HttpSession session,
                                  RedirectAttributes attributes) {
         if (!sesionEsAdmin(session)) {
             return "redirect:/login";
         }
-        if (!datosUsuarioValidos(nombre, correo, clave, rolId)) {
-            attributes.addFlashAttribute("error", "Completa nombre, correo, contraseña y selecciona un rol.");
+        if (!datosUsuarioValidos(nombre, correo, clave, rolesIds)) {
+            attributes.addFlashAttribute("error", "Completa nombre, correo, contraseña y selecciona al menos un rol válido.");
             return "redirect:/usuarios";
         }
         if (usuarioRepository.findByCorreo(correo.trim()).isPresent()) {
             attributes.addFlashAttribute("error", "Ya existe un usuario con ese correo.");
             return "redirect:/usuarios";
         }
-        Rol rol = rolRepository.findById(rolId).orElse(null);
-        if (rol == null) {
-            attributes.addFlashAttribute("error", "Selecciona un rol existente.");
+        Set<Rol> roles = buscarRoles(rolesIds);
+        if (roles == null || roles.isEmpty()) {
+            attributes.addFlashAttribute("error", "Selecciona al menos un rol existente.");
             return "redirect:/usuarios";
         }
         Usuario usuario = new Usuario();
@@ -86,7 +90,7 @@ public class UsuarioWebController {
         usuario.setClave(passwordEncoder.encode(clave.trim()));
         usuario.setTelefono(limpiar(telefono));
         usuario.setEstatus(1);
-        usuario.setRol(rol);
+        usuario.setRoles(roles);
         usuarioRepository.save(usuario);
         attributes.addFlashAttribute("mensaje", "Usuario creado.");
         return "redirect:/usuarios";
@@ -98,7 +102,8 @@ public class UsuarioWebController {
                                     @RequestParam String correo,
                                     @RequestParam(required = false) String telefono,
                                     @RequestParam(required = false) String clave,
-                                    @RequestParam Integer rolId,
+                                    @RequestParam(required = false) String claveActual,
+                                    @RequestParam(required = false) List<Integer> rolesIds,
                                     HttpSession session,
                                     RedirectAttributes attributes) {
         Usuario admin = usuarioDeSesion(session);
@@ -110,9 +115,17 @@ public class UsuarioWebController {
             return "redirect:/usuarios";
         }
         Usuario actual = usuarioRepository.findById(usuarioId).orElse(null);
-        Rol rol = rolRepository.findById(rolId).orElse(null);
-        if (actual == null || rol == null) {
-            attributes.addFlashAttribute("error", "No se encontró el usuario o rol seleccionado.");
+        Set<Rol> roles = buscarRoles(rolesIds);
+        if (actual == null || roles == null || roles.isEmpty()) {
+            attributes.addFlashAttribute("error", "Selecciona al menos un rol existente para el usuario.");
+            return "redirect:/usuarios";
+        }
+        if (clave != null && !clave.isBlank()
+                && (claveActual == null || claveActual.isBlank()
+                || actual.getClave() == null
+                || !passwordEncoder.matches(claveActual.trim(), actual.getClave()))) {
+            attributes.addFlashAttribute("error",
+                    "Para cambiar la contraseña, confirma correctamente la contraseña actual del usuario.");
             return "redirect:/usuarios";
         }
         if (usuarioRepository.findByCorreo(correo.trim()).filter(u -> !u.getId().equals(usuarioId)).isPresent()) {
@@ -125,7 +138,7 @@ public class UsuarioWebController {
         if (clave != null && !clave.isBlank()) {
             actual.setClave(passwordEncoder.encode(clave.trim()));
         }
-        actual.setRol(rol);
+        actual.setRoles(roles);
         usuarioRepository.save(actual);
         if (actual.getId().equals(admin.getId())) {
             session.setAttribute("usuarioLogueado", actual);
@@ -155,21 +168,45 @@ public class UsuarioWebController {
         return "redirect:/usuarios";
     }
 
+    @PostMapping("/usuarios/estado")
+    public String cambiarEstadoUsuario(@RequestParam Integer usuarioId,
+                                       HttpSession session,
+                                       RedirectAttributes attributes) {
+        Usuario admin = usuarioDeSesion(session);
+        if (admin == null || !esAdmin(admin)) {
+            return "redirect:/login";
+        }
+        if (admin.getId().equals(usuarioId)) {
+            attributes.addFlashAttribute("error", "No puedes desactivar la cuenta con la que tienes la sesión abierta.");
+            return "redirect:/usuarios";
+        }
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElse(null);
+        if (usuario == null) {
+            attributes.addFlashAttribute("error", "No se encontró el usuario que intentas actualizar.");
+            return "redirect:/usuarios";
+        }
+        boolean activar = usuario.getEstatus() == null || usuario.getEstatus() != 1;
+        usuario.setEstatus(activar ? 1 : 0);
+        usuarioRepository.save(usuario);
+        attributes.addFlashAttribute("mensaje", activar ? "Usuario activado." : "Usuario desactivado.");
+        return "redirect:/usuarios";
+    }
+
     @PostMapping("/usuarios/rol")
     public String actualizarRolUsuario(@RequestParam Integer usuarioId,
-                                       @RequestParam Integer rolId,
+                                       @RequestParam(required = false) List<Integer> rolesIds,
                                        HttpSession session,
                                        RedirectAttributes attributes) {
         if (!sesionEsAdmin(session)) {
             return "redirect:/login";
         }
         Usuario usuario = usuarioRepository.findById(usuarioId).orElse(null);
-        Rol rol = rolRepository.findById(rolId).orElse(null);
-        if (usuario == null || rol == null) {
-            attributes.addFlashAttribute("error", "Debes seleccionar un usuario y un rol válidos.");
+        Set<Rol> roles = buscarRoles(rolesIds);
+        if (usuario == null || roles == null || roles.isEmpty()) {
+            attributes.addFlashAttribute("error", "Debes seleccionar un usuario y al menos un rol válido.");
             return "redirect:/usuarios";
         }
-        usuario.setRol(rol);
+        usuario.setRoles(roles);
         usuarioRepository.save(usuario);
         attributes.addFlashAttribute("mensaje", "Rol actualizado.");
         return "redirect:/usuarios";
@@ -220,16 +257,28 @@ public class UsuarioWebController {
         return esAdmin(usuarioDeSesion(session));
     }
 
-    private boolean datosUsuarioValidos(String nombre, String correo, String clave, Integer rolId) {
+    private boolean datosUsuarioValidos(String nombre, String correo, String clave, List<Integer> rolesIds) {
         return nombre != null && !nombre.isBlank()
                 && correo != null && !correo.isBlank()
                 && clave != null && !clave.isBlank()
-                && rolId != null && rolId > 0;
+                && rolesIds != null && !rolesIds.isEmpty()
+                && buscarRoles(rolesIds) != null;
     }
 
     private boolean esAdmin(Usuario usuario) {
-        return usuario != null && usuario.getRol() != null && usuario.getRol().getNombre() != null
-                && usuario.getRol().getNombre().equalsIgnoreCase("ADMIN");
+        return usuario != null && usuario.tieneRol("ADMIN");
+    }
+
+    private Set<Rol> buscarRoles(List<Integer> rolesIds) {
+        if (rolesIds == null || rolesIds.isEmpty() || rolesIds.stream().anyMatch(id -> id == null || id <= 0)) {
+            return null;
+        }
+        List<Integer> idsUnicos = rolesIds.stream().distinct().toList();
+        List<Rol> rolesEncontrados = rolRepository.findAllById(idsUnicos);
+        if (rolesEncontrados.size() != idsUnicos.size()) {
+            return null;
+        }
+        return new LinkedHashSet<>(rolesEncontrados);
     }
 
     private String limpiar(String valor) {

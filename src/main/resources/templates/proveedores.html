@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('suppliers')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Proveedores</h1>
+            <small>Administra los proveedores del inventario</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <section class="panel">
+        <div class="section-heading-row">
+            <h2>Añadir proveedor</h2>
+            <details class="add-disclosure">
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir proveedor</summary>
+                <div class="disclosure-content">
+                    <form th:action="@{/catalogos/proveedores}" method="post" class="form-grid">
+                        <div class="field"><label for="proveedorNombre">Nombre</label><input id="proveedorNombre" name="nombre" required maxlength="100"></div>
+                        <div class="field"><label for="rifNit">RIF / NIT</label><input id="rifNit" name="rifNit" maxlength="50"></div>
+                        <div class="field"><label for="proveedorTelefono">Teléfono</label><input id="proveedorTelefono" name="telefono" maxlength="20"></div>
+                        <div class="field"><label for="proveedorCorreo">Correo</label><input id="proveedorCorreo" type="email" name="correo" maxlength="100"></div>
+                        <div class="field"><label for="direccion">Dirección</label><input id="direccion" name="direccion"></div>
+                        <button class="btn btn-primary" type="submit">Guardar proveedor</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Proveedores registrados</h2>
+        <p th:if="${#lists.isEmpty(proveedores)}" class="empty-list-item">Aún no hay proveedores registrados.</p>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(proveedores)}">
+            <table class="table table-vcenter data-table suppliers-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Proveedor</th>
+                    <th>RIF / NIT</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="supplier-row" th:each="p : ${proveedores}">
+                    <td colspan="7">
+                        <details class="supplier-row-details">
+                            <summary class="supplier-row-summary">
+                                <span th:text="${p.id}"></span>
+                                <span class="supplier-name" th:text="${p.nombre}"></span>
+                                <span th:text="${p.rifNit != null ? p.rifNit : '—'}"></span>
+                                <span th:text="${p.telefono != null ? p.telefono : '—'}"></span>
+                                <span th:text="${p.correo != null ? p.correo : '—'}"></span>
+                                <span class="supplier-address" th:text="${p.direccion != null ? p.direccion : '—'}"></span>
+                                <span class="catalog-row-hint">Ver acciones</span>
+                            </summary>
+                            <div class="supplier-expanded">
+                                <details class="supplier-inline-edit">
+                                    <summary class="btn btn-secondary">Editar proveedor</summary>
+                                    <form th:action="@{/catalogos/proveedores/actualizar}" method="post" class="supplier-edit-form">
+                                        <input type="hidden" name="id" th:value="${p.id}">
+                                        <div class="field"><label th:for="${'proveedorNombre-' + p.id}">Nombre</label><input th:id="${'proveedorNombre-' + p.id}" name="nombre" th:value="${p.nombre}" required maxlength="100"></div>
+                                        <div class="field"><label th:for="${'proveedorRif-' + p.id}">RIF / NIT</label><input th:id="${'proveedorRif-' + p.id}" name="rifNit" th:value="${p.rifNit}" maxlength="50"></div>
+                                        <div class="field"><label th:for="${'proveedorTelefono-' + p.id}">Teléfono</label><input th:id="${'proveedorTelefono-' + p.id}" name="telefono" th:value="${p.telefono}" maxlength="20"></div>
+                                        <div class="field"><label th:for="${'proveedorCorreo-' + p.id}">Correo</label><input th:id="${'proveedorCorreo-' + p.id}" type="email" name="correo" th:value="${p.correo}" maxlength="100"></div>
+                                        <div class="field"><label th:for="${'proveedorDireccion-' + p.id}">Dirección</label><input th:id="${'proveedorDireccion-' + p.id}" name="direccion" th:value="${p.direccion}"></div>
+                                        <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                                    </form>
+                                </details>
+                                <form th:action="@{/catalogos/proveedores/eliminar}" method="post">
+                                    <input type="hidden" name="id" th:value="${p.id}">
+                                    <button class="btn btn-danger" type="submit">Eliminar proveedor</button>
+                                </form>
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

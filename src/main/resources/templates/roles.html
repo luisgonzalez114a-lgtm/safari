@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roles - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
 </head>
 <body>
 <div class="app-shell">
@@ -13,22 +13,44 @@
     <header class="topbar">
         <div class="brand">
             <h1>Roles</h1>
-            <small>Roles disponibles en el sistema</small>
+            <small>Relación muchos a muchos: cada usuario puede tener varios roles</small>
         </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
     </header>
 
     <section class="panel">
-        <h2>Crear rol</h2>
-        <p class="muted-copy">Usa `VENDEDOR` para personal de caja; `ADMIN` puede administrar usuarios, catálogos y productos.</p>
-        <form th:action="@{/roles/guardar}" method="post" class="form-grid">
-            <div class="role-create-row">
-                <div class="field">
-                    <label for="nombreRol">Nombre del rol</label>
-                    <input id="nombreRol" type="text" name="nombre" placeholder="Ej. SUPERVISOR" maxlength="50" required />
-                </div>
-                <button class="btn btn-primary" type="submit">Guardar rol</button>
+        <div class="section-heading-row">
+            <div>
+                <h2>Roles y permisos</h2>
+                <p class="muted-copy">Cada usuario puede tener varios roles; sus permisos se combinan.</p>
             </div>
-        </form>
+            <details class="add-disclosure">
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Crear rol</summary>
+                <div class="disclosure-content">
+                    <form th:action="@{/roles/guardar}" method="post" class="form-grid">
+                        <div class="field">
+                            <label for="nombreRol">Nombre del rol</label>
+                            <input id="nombreRol" type="text" name="nombre" placeholder="Ej. SUPERVISOR" maxlength="50" required />
+                        </div>
+                        <button class="btn btn-primary" type="submit">Guardar rol</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+        <div class="permission-reference" aria-label="Permisos fijos de los roles del sistema">
+            <article class="permission-card">
+                <strong>ADMIN</strong>
+                <span>Gestionar usuarios, roles y catálogos; administrar productos; registrar entradas y ventas; consultar el inventario.</span>
+            </article>
+            <article class="permission-card">
+                <strong>VENDEDOR</strong>
+                <span>Registrar entradas y ventas, consultar productos y existencias. No puede administrar usuarios, roles ni catálogos.</span>
+            </article>
+            <article class="permission-card">
+                <strong>USER</strong>
+                <span>Consultar el catálogo público. No puede gestionar el inventario ni registrar movimientos.</span>
+            </article>
+        </div>
     </section>
 
     <section class="panel margin-top">
@@ -39,11 +61,13 @@
                 <tr>
                     <th>ID</th>
                     <th>Rol</th>
+                    <th>Usuarios asignados</th>
+                    <th>Permisos del sistema</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(roles)}">
-                    <td class="empty-state" colspan="2">Aún no hay roles registrados.</td>
+                    <td class="empty-state" colspan="4">Aún no hay roles registrados.</td>
                 </tr>
                 <tr th:each="r : ${roles}">
                     <td th:text="${r.id}"></td>
@@ -53,11 +77,21 @@
                         <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR')}">Registrar entradas y ventas</span>
                         <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'USER')}">Consulta del catálogo</span>
                     </td>
+                    <td th:text="${r.usuarios.size()}"></td>
+                    <td>
+                        <span class="muted-copy" th:if="${!#strings.equalsIgnoreCase(r.nombre, 'ADMIN') and !#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR') and !#strings.equalsIgnoreCase(r.nombre, 'USER')}">
+                            Sin permisos especiales definidos
+                        </span>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'ADMIN')}">Usuarios, roles, catálogos, productos y operaciones</span>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR')}">Entradas, ventas y consulta de productos</span>
+                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'USER')}">Consulta del catálogo</span>
+                    </td>
                 </tr>
                 </tbody>
             </table>
         </div>
     </section>
 </div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
 </body>
 </html>

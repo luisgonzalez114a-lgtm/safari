@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcas - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('brands')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Marcas</h1>
+            <small>Administra las marcas de tus productos</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <section class="panel">
+        <div class="section-heading-row">
+            <h2>Añadir marca</h2>
+            <details class="add-disclosure">
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir marca</summary>
+                <div class="disclosure-content">
+                    <form th:action="@{/catalogos/marcas}" method="post" class="form-grid">
+                        <div class="field"><label for="marcaNombre">Nombre de la marca</label><input id="marcaNombre" name="nombre" required maxlength="50"></div>
+                        <button class="btn btn-primary" type="submit">Guardar marca</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Marcas registradas</h2>
+        <div class="table-wrap">
+            <table class="table table-vcenter data-table catalog-rows-table brands-table">
+                <thead>
+                <tr><th>ID</th><th>Marca</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(marcas)}"><td class="empty-state" colspan="3">Aún no hay marcas registradas.</td></tr>
+                <tr class="catalog-row" th:each="m : ${marcas}">
+                    <td colspan="3">
+                        <details class="catalog-row-details">
+                            <summary class="catalog-row-summary brand-row-summary">
+                                <span th:text="${m.id}"></span>
+                                <strong th:text="${m.nombre}">Marca</strong>
+                                <span class="catalog-row-hint">Ver acciones</span>
+                            </summary>
+                            <div class="catalog-row-expanded">
+                                <details class="catalog-inline-edit">
+                                    <summary class="btn btn-secondary">Editar marca</summary>
+                                    <form th:action="@{/catalogos/marcas/actualizar}" method="post" class="catalog-edit-form">
+                                        <input type="hidden" name="id" th:value="${m.id}">
+                                        <div class="field"><label th:for="${'marcaNombre-' + m.id}">Nombre de la marca</label><input th:id="${'marcaNombre-' + m.id}" name="nombre" th:value="${m.nombre}" required maxlength="50"></div>
+                                        <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                                    </form>
+                                </details>
+                                <form th:action="@{/catalogos/marcas/eliminar}" method="post">
+                                    <input type="hidden" name="id" th:value="${m.id}">
+                                    <button class="btn btn-danger" type="submit">Eliminar marca</button>
+                                </form>
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

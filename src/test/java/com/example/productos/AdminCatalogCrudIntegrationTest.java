@@ -203,24 +203,53 @@ class AdminCatalogCrudIntegrationTest {
                         .param("nombre", categoryName)
                         .param("descripcion", "Creada desde SAFARI"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/catalogos"));
+                .andExpect(redirectedUrl("/catalogos/categorias"));
         mockMvc.perform(post("/catalogos/marcas")
                         .session(adminSession)
                         .param("nombre", brandName))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/catalogos"));
+                .andExpect(redirectedUrl("/catalogos/marcas"));
         mockMvc.perform(post("/catalogos/proveedores")
                         .session(adminSession)
                         .param("nombre", supplierName)
                         .param("rifNit", "WEB-" + suffix))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/catalogos"));
+                .andExpect(redirectedUrl("/catalogos/proveedores"));
 
         mockMvc.perform(get("/catalogos").session(adminSession))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/catalogos/proveedores"));
+        mockMvc.perform(get("/catalogos/proveedores").session(adminSession))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString(categoryName)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("suppliers-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir proveedor")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Editar proveedor")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Eliminar proveedor")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(supplierName)))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("brands-table"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("categories-table"))));
+        mockMvc.perform(get("/catalogos/marcas").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("brands-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir marca")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(brandName)))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString(supplierName)));
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("suppliers-table"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("categories-table"))));
+        mockMvc.perform(get("/catalogos/categorias").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("categories-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir categoría")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Editar categoría")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Eliminar categoría")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(categoryName)))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("suppliers-table"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("brands-table"))));
         assertTrue(categoriaRepository.findAll().stream().anyMatch(value -> value.getNombre().equals(categoryName)));
         assertTrue(marcaRepository.findAll().stream().anyMatch(value -> value.getNombre().equals(brandName)));
         assertTrue(proveedorRepository.findAll().stream().anyMatch(value -> value.getNombre().equals(supplierName)));
@@ -246,7 +275,7 @@ class AdminCatalogCrudIntegrationTest {
                         .param("nombre", "Category edited " + suffix)
                         .param("descripcion", "After"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/catalogos"));
+                .andExpect(redirectedUrl("/catalogos/categorias"));
         assertEquals("After", categoriaRepository.findById(category.getId()).orElseThrow().getDescripcion());
 
         mockMvc.perform(post("/catalogos/marcas")

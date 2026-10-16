@@ -1,6 +1,7 @@
 package com.example.productos.config;
 
 import com.example.productos.model.Usuario;
+import com.example.productos.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -13,13 +14,18 @@ import java.util.Set;
 @Component
 public class RoleAccessInterceptor implements HandlerInterceptor {
     private static final Set<String> ADMIN_WEB_PATHS = Set.of(
-            "/usuarios", "/usuarios/guardar", "/usuarios/rol", "/usuarios/actualizar",
+            "/usuarios", "/usuarios/guardar", "/usuarios/rol", "/usuarios/actualizar", "/usuarios/estado",
             "/usuarios/eliminar", "/roles", "/roles/guardar", "/catalogos",
             "/catalogos/categorias", "/catalogos/categorias/actualizar", "/catalogos/categorias/eliminar",
             "/catalogos/marcas", "/catalogos/marcas/actualizar", "/catalogos/marcas/eliminar",
             "/catalogos/proveedores", "/catalogos/proveedores/actualizar", "/catalogos/proveedores/eliminar");
     private static final Set<String> OPERATIONS_WEB_PATHS = Set.of(
             "/entradas", "/entradas/guardar", "/salidas", "/salidas/guardar");
+    private final UsuarioRepository usuarioRepository;
+
+    public RoleAccessInterceptor(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
@@ -30,9 +36,17 @@ public class RoleAccessInterceptor implements HandlerInterceptor {
         }
         HttpSession session = request.getSession(false);
         Usuario user = session == null ? null : (Usuario) session.getAttribute("usuarioLogueado");
-        if (user != null && (user.getEstatus() == null || user.getEstatus() != 1)) {
-            session.invalidate();
-            user = null;
+        if (session != null && user != null) {
+            Usuario currentUser = user.getId() == null
+                    ? null
+                    : usuarioRepository.findById(user.getId()).orElse(null);
+            if (currentUser == null || currentUser.getEstatus() == null || currentUser.getEstatus() != 1) {
+                session.invalidate();
+                user = null;
+            } else {
+                session.setAttribute("usuarioLogueado", currentUser);
+                user = currentUser;
+            }
         }
         boolean admin = hasRole(user, "ADMIN");
         boolean seller = hasRole(user, "VENDEDOR");
@@ -74,8 +88,7 @@ public class RoleAccessInterceptor implements HandlerInterceptor {
     }
 
     private boolean hasRole(Usuario user, String roleName) {
-        return user != null && user.getRol() != null && user.getRol().getNombre() != null
-                && user.getRol().getNombre().equalsIgnoreCase(roleName);
+        return user != null && user.tieneRol(roleName);
     }
 
     private boolean deny(HttpServletRequest request, HttpServletResponse response, boolean api) throws IOException {

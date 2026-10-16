@@ -1,6 +1,9 @@
 package com.example.productos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "roles")
@@ -11,6 +14,10 @@ public class Rol {
 
     @Column(nullable = false, length = 50)
     private String nombre;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    private Set<Usuario> usuarios = new LinkedHashSet<>();
 
     public Rol() {}
 
@@ -28,6 +35,10 @@ public class Rol {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public Set<Usuario> getUsuarios() {
+        return usuarios;
     }
 
 }

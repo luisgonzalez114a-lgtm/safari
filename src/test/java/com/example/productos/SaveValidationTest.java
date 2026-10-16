@@ -30,7 +30,7 @@ class SaveValidationTest {
         usuario.setNombre("Admin");
         usuario.setCorreo("admin@safari.com");
         usuario.setClave("admin123");
-        usuario.setRol(rol);
+        usuario.setRoles(java.util.Set.of(rol));
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("usuarioLogueado", usuario);
@@ -60,7 +60,7 @@ class SaveValidationTest {
         usuario.setNombre("Admin");
         usuario.setCorreo("admin@safari.com");
         usuario.setClave("admin123");
-        usuario.setRol(rol);
+        usuario.setRoles(java.util.Set.of(rol));
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("usuarioLogueado", usuario);
@@ -70,7 +70,7 @@ class SaveValidationTest {
                         .param("nombre", "")
                         .param("correo", "")
                         .param("clave", "")
-                        .param("rolId", ""))
+                        .param("rolesIds", ""))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/usuarios"));
     }

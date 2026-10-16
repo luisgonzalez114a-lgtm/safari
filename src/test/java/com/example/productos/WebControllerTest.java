@@ -48,14 +48,19 @@ class WebControllerTest {
         usuario.setNombre("Admin");
         usuario.setCorreo("admin@safari.com");
         usuario.setClave("admin123");
-        usuario.setRol(rol);
+        usuario.setRoles(java.util.Set.of(rol));
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("usuarioLogueado", usuario);
 
         mockMvc.perform(get("/").session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("SAFARI")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("SAFARI")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir al inventario")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-row-details")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Inventario")));
     }
 
     @Test
@@ -93,7 +98,7 @@ class WebControllerTest {
         usuario.setNombre("Admin");
         usuario.setCorreo("admin@safari.com");
         usuario.setClave("admin123");
-        usuario.setRol(rol);
+        usuario.setRoles(java.util.Set.of(rol));
         return usuario;
     }
 }

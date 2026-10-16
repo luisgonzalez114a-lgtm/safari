@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
 </head>
 <body>
 <div class="app-shell">
@@ -15,35 +15,46 @@
             <h1>Ventas y salidas</h1>
             <small>Venta de mostrador · sin registro de cliente</small>
         </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
     </header>
 
     <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
     <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
-    <div class="layout">
+    <div class="layout wide-layout">
         <section class="panel">
-            <h2>Registrar venta</h2>
-            <p class="muted-copy">El precio se toma del precio actual del producto. La venta descuenta existencias automáticamente.</p>
-            <form th:action="@{/salidas/guardar}" method="post" class="form-grid">
-                <div class="field">
-                    <label for="productoId">Producto</label>
-                    <select id="productoId" name="productoId" required>
-                        <option value="">Selecciona producto con existencias</option>
-                        <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
-                                th:value="${p.id}"
-                                th:text="${p.codigo + ' · ' + p.nombre + ' — disponible: ' + p.stockActual + ' — $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
-                    </select>
+            <div class="section-heading-row">
+                <div>
+                    <h2>Ventas y salidas</h2>
+                    <p class="muted-copy">El movimiento descuenta existencias automáticamente.</p>
                 </div>
-                <div class="field">
-                    <label for="cantidad">Cantidad</label>
-                    <input id="cantidad" type="number" name="cantidad" min="1" value="1" required>
+            </div>
+            <details class="add-disclosure wide-add-disclosure">
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Registrar venta</summary>
+                <div class="disclosure-content">
+                    <p class="muted-copy">El precio se toma del precio actual del producto.</p>
+                    <form th:action="@{/salidas/guardar}" method="post" class="form-grid">
+                        <div class="field">
+                            <label for="productoId">Producto</label>
+                            <select id="productoId" name="productoId" required>
+                                <option value="">Selecciona producto con existencias</option>
+                                <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
+                                        th:value="${p.id}"
+                                        th:text="${p.codigo + ' · ' + p.nombre + ' — disponible: ' + p.stockActual + ' — $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="cantidad">Cantidad</label>
+                            <input id="cantidad" type="number" name="cantidad" min="1" value="1" required>
+                        </div>
+                        <div class="field">
+                            <label for="observaciones">Observaciones</label>
+                            <input id="observaciones" type="text" name="observaciones" maxlength="1000">
+                        </div>
+                        <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(productos)}">Cobrar y registrar salida</button>
+                    </form>
                 </div>
-                <div class="field">
-                    <label for="observaciones">Observaciones</label>
-                    <input id="observaciones" type="text" name="observaciones" maxlength="1000">
-                </div>
-                <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(productos)}">Cobrar y registrar salida</button>
-            </form>
+            </details>
         </section>
 
         <section class="panel">
@@ -70,5 +81,6 @@
         </section>
     </div>
 </div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
 </body>
 </html>

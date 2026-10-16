@@ -5,23 +5,48 @@
     </a>
 
     <div class="sidebar-label">MENÚ</div>
-    <a class="sidebar-link" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
-    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and (#strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN') or #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'VENDEDOR'))}"
-       th:href="@{/entradas}" th:classappend="${activePage == 'entries'} ? ' active' : ''">Entradas</a>
-    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and (#strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN') or #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'VENDEDOR'))}"
-       th:href="@{/salidas}" th:classappend="${activePage == 'sales'} ? ' active' : ''">Ventas y salidas</a>
+    <details class="sidebar-group" th:open="${activePage == 'inventory' or activePage == 'entries' or activePage == 'sales'}">
+        <summary class="sidebar-group-summary">Inventario</summary>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
+        <a class="sidebar-link sidebar-sublink" th:if="${usuarioLogueado.tieneRol('ADMIN') or usuarioLogueado.tieneRol('VENDEDOR')}"
+           th:href="@{/entradas}" th:classappend="${activePage == 'entries'} ? ' active' : ''">Entradas</a>
+        <a class="sidebar-link sidebar-sublink" th:if="${usuarioLogueado.tieneRol('ADMIN') or usuarioLogueado.tieneRol('VENDEDOR')}"
+           th:href="@{/salidas}" th:classappend="${activePage == 'sales'} ? ' active' : ''">Ventas y salidas</a>
+    </details>
 
-    <div class="sidebar-label" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}">ADMINISTRACIÓN</div>
-    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
-       th:href="@{/catalogos}" th:classappend="${activePage == 'catalogs'} ? ' active' : ''">Proveedores y catálogos</a>
-    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
-       th:href="@{/usuarios}" th:classappend="${activePage == 'users'} ? ' active' : ''">Usuarios</a>
-    <a class="sidebar-link" th:if="${usuarioLogueado.rol != null and #strings.equalsIgnoreCase(usuarioLogueado.rol.nombre, 'ADMIN')}"
-       th:href="@{/roles}" th:classappend="${activePage == 'roles'} ? ' active' : ''">Roles</a>
+    <details class="sidebar-group" th:if="${usuarioLogueado.tieneRol('ADMIN')}"
+             th:open="${activePage == 'suppliers' or activePage == 'brands' or activePage == 'categories'}">
+        <summary class="sidebar-group-summary">Catálogos</summary>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/proveedores}"
+           th:classappend="${activePage == 'suppliers'} ? ' active' : ''">Proveedores</a>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/marcas}"
+           th:classappend="${activePage == 'brands'} ? ' active' : ''">Marcas</a>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/categorias}"
+           th:classappend="${activePage == 'categories'} ? ' active' : ''">Categorías</a>
+    </details>
 
-    <div class="sidebar-footer">
-        <span class="sidebar-user" th:text="${usuarioLogueado.nombre}">Usuario</span>
-        <span class="sidebar-role" th:text="${usuarioLogueado.rol != null ? usuarioLogueado.rol.nombre : 'Sin rol'}">ADMIN</span>
-        <a class="sidebar-logout" th:href="@{/logout}">Cerrar sesión</a>
-    </div>
+    <details class="sidebar-group" th:if="${usuarioLogueado.tieneRol('ADMIN')}"
+             th:open="${activePage == 'users' or activePage == 'roles'}">
+        <summary class="sidebar-group-summary">Usuarios y roles</summary>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/usuarios}" th:classappend="${activePage == 'users'} ? ' active' : ''">Usuarios</a>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/roles}" th:classappend="${activePage == 'roles'} ? ' active' : ''">Roles</a>
+    </details>
+
 </nav>
+
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="userMenu" class="topbar-user-menu"
+     th:if="${usuarioLogueado != null}">
+    <div class="topbar-user-info">
+        <span class="topbar-user-name" th:text="${usuarioLogueado.nombre}">Usuario</span>
+        <span class="topbar-user-role" th:text="${usuarioLogueado.nombresRoles}">Roles</span>
+    </div>
+    <a class="btn btn-secondary topbar-logout" th:href="@{/logout}">Cerrar sesión</a>
+</div>
+
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="pageLoader">
+    <div class="page-loader" role="status" aria-live="polite" aria-hidden="true">
+        <span class="page-loader-spinner" aria-hidden="true"></span>
+        <span class="page-loader-message">Cargando SAFARI...</span>
+    </div>
+    <script th:src="@{/js/page-transitions.js?v=1.1.0}" defer></script>
+</th:block>

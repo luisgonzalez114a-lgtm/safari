@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('categories')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Categorías</h1>
+            <small>Organiza los productos del inventario</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <section class="panel">
+        <div class="section-heading-row">
+            <h2>Añadir categoría</h2>
+            <details class="add-disclosure">
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir categoría</summary>
+                <div class="disclosure-content">
+                    <form th:action="@{/catalogos/categorias}" method="post" class="form-grid">
+                        <div class="field"><label for="categoriaNombre">Nombre de la categoría</label><input id="categoriaNombre" name="nombre" required maxlength="50"></div>
+                        <div class="field"><label for="categoriaDescripcion">Descripción</label><input id="categoriaDescripcion" name="descripcion"></div>
+                        <button class="btn btn-primary" type="submit">Guardar categoría</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Categorías registradas</h2>
+        <div class="table-wrap">
+            <table class="table table-vcenter data-table catalog-rows-table categories-table">
+                <thead>
+                <tr><th>ID</th><th>Categoría</th><th>Descripción</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(categorias)}"><td class="empty-state" colspan="4">Aún no hay categorías registradas.</td></tr>
+                <tr class="catalog-row" th:each="c : ${categorias}">
+                    <td colspan="4">
+                        <details class="catalog-row-details">
+                            <summary class="catalog-row-summary category-row-summary">
+                                <span th:text="${c.id}"></span>
+                                <strong th:text="${c.nombre}">Categoría</strong>
+                                <span class="category-description" th:text="${c.descripcion != null and !c.descripcion.isBlank() ? c.descripcion : 'Sin descripción'}"></span>
+                                <span class="catalog-row-hint">Ver acciones</span>
+                            </summary>
+                            <div class="catalog-row-expanded">
+                                <details class="catalog-inline-edit">
+                                    <summary class="btn btn-secondary">Editar categoría</summary>
+                                    <form th:action="@{/catalogos/categorias/actualizar}" method="post" class="catalog-edit-form">
+                                        <input type="hidden" name="id" th:value="${c.id}">
+                                        <div class="field"><label th:for="${'categoriaNombre-' + c.id}">Nombre de la categoría</label><input th:id="${'categoriaNombre-' + c.id}" name="nombre" th:value="${c.nombre}" required maxlength="50"></div>
+                                        <div class="field"><label th:for="${'categoriaDescripcion-' + c.id}">Descripción</label><input th:id="${'categoriaDescripcion-' + c.id}" name="descripcion" th:value="${c.descripcion}"></div>
+                                        <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                                    </form>
+                                </details>
+                                <form th:action="@{/catalogos/categorias/eliminar}" method="post">
+                                    <input type="hidden" name="id" th:value="${c.id}">
+                                    <button class="btn btn-danger" type="submit">Eliminar categoría</button>
+                                </form>
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

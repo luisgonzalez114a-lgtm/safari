@@ -131,6 +131,8 @@ class InventorySalesFlowIntegrationTest {
         mockMvc.perform(get("/salidas").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(productName)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("15.00")));
         mockMvc.perform(get("/api/salidas").session(adminSession))
                 .andExpect(status().isOk())
