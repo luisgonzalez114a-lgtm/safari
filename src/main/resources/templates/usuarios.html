@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuarios - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.6.6}">
 </head>
 <body>
 <div class="app-shell">
@@ -20,64 +20,32 @@
     <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
     <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
-    <div class="two-col">
-        <section class="panel">
-            <h2>Crear usuario</h2>
-            <p class="muted-copy">Asigna `VENDEDOR` al personal de caja. Las contraseñas se guardan cifradas.</p>
-            <form th:action="@{/usuarios/guardar}" method="post" class="form-grid">
-                <div class="field">
-                    <label for="nombre">Nombre completo</label>
-                    <input id="nombre" type="text" name="nombre" placeholder="Nombre completo" required />
-                </div>
-                <div class="field">
-                    <label for="correo">Correo</label>
-                    <input id="correo" type="email" name="correo" placeholder="persona@correo.com" required />
-                </div>
-                <div class="field">
-                    <label for="telefono">Teléfono</label>
-                    <input id="telefono" type="tel" name="telefono" placeholder="Opcional" />
-                </div>
-                <div class="field">
-                    <label for="clave">Contraseña</label>
-                    <input id="clave" type="password" name="clave" placeholder="Contraseña" required />
-                </div>
-                <div class="field">
-                    <label for="rolId">Rol</label>
-                    <select id="rolId" name="rolId" required>
-                        <option value="">Selecciona rol</option>
-                        <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" type="submit">Guardar usuario</button>
-            </form>
-        </section>
+    <section class="users-section">
+        <div class="users-section-heading">
+            <div>
+                <h2>Usuarios registrados</h2>
+                <p class="muted-copy" th:if="${usuariosPagina.totalElements > 0}"
+                   th:text="${'Mostrando ' + (usuariosPagina.number * usuariosPagina.size + 1) + '–' + (usuariosPagina.number * usuariosPagina.size + usuariosPagina.numberOfElements) + ' de ' + usuariosPagina.totalElements + ' usuarios'}"></p>
+            </div>
+            <div class="users-section-actions">
+                <button class="btn btn-primary" type="button" onclick="document.getElementById('crearUsuarioModal').showModal()">Crear usuario</button>
+                <button class="btn btn-secondary" type="button" onclick="document.getElementById('asignarRolModal').showModal()">Asignar rol</button>
+            </div>
+        </div>
 
-        <section class="panel">
-            <h2>Asignar rol a usuario</h2>
-            <form th:action="@{/usuarios/rol}" method="post" class="form-grid">
-                <div class="field">
-                    <label for="usuarioId">Usuario</label>
-                    <select id="usuarioId" name="usuarioId" required>
-                        <option value="">Selecciona usuario</option>
-                        <option th:each="u : ${usuarios}" th:value="${u.id}" th:text="${u.nombre + ' (' + u.correo + ')'}"></option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="nuevoRolId">Nuevo rol</label>
-                    <select id="nuevoRolId" name="rolId" required>
-                        <option value="">Selecciona rol</option>
-                        <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" type="submit">Guardar rol</button>
-            </form>
-        </section>
-    </div>
+        <p class="empty-state panel" th:if="${usuariosPagina.isEmpty()}">Todavía no hay usuarios registrados.</p>
 
-    <section class="panel">
-        <h2>Usuarios registrados</h2>
-        <div class="table-wrap">
-            <table class="table table-vcenter data-table">
+        <div class="table-wrap" th:unless="${usuariosPagina.isEmpty()}">
+            <table class="table table-vcenter data-table users-table">
+                <colgroup>
+                    <col style="width: 5%">
+                    <col style="width: 17%">
+                    <col style="width: 23%">
+                    <col style="width: 15%">
+                    <col style="width: 11%">
+                    <col style="width: 10%">
+                    <col style="width: 19%">
+                </colgroup>
                 <thead>
                 <tr>
                     <th>ID</th>
@@ -90,46 +58,144 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${#lists.isEmpty(usuarios)}">
-                    <td class="empty-state" colspan="7">Todavía no hay usuarios registrados.</td>
-                </tr>
-                <tr th:each="u : ${usuarios}">
-                    <td th:text="${u.id}"></td>
-                    <td th:text="${u.nombre}"></td>
-                    <td th:text="${u.correo}"></td>
-                    <td th:text="${u.telefono}"></td>
-                    <td th:text="${u.rol != null ? u.rol.nombre : 'Sin rol'}"></td>
-                    <td>
-                        <span class="badge success" th:if="${u.estatus == 1}">Activo</span>
-                        <span class="badge warning" th:unless="${u.estatus == 1}">Inactivo</span>
-                    </td>
-                    <td class="user-actions">
-                        <details>
-                            <summary class="btn btn-secondary">Editar</summary>
-                            <form th:action="@{/usuarios/actualizar}" method="post" class="user-edit-form">
-                                <input type="hidden" name="usuarioId" th:value="${u.id}">
-                                <label>Nombre<input name="nombre" th:value="${u.nombre}" required></label>
-                                <label>Correo<input type="email" name="correo" th:value="${u.correo}" required></label>
-                                <label>Teléfono<input name="telefono" th:value="${u.telefono}"></label>
-                                <label>Nueva contraseña<input type="password" name="clave" placeholder="Dejar vacía para mantenerla"></label>
-                                <label>Rol<select name="rolId" required>
-                                    <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}" th:selected="${u.rol != null and r.id == u.rol.id}"></option>
-                                </select></label>
-                                <button class="btn btn-primary" type="submit">Guardar cambios</button>
-                            </form>
+                <tr class="user-row" th:each="u : ${usuariosPagina.content}">
+                    <td colspan="7">
+                        <details class="user-row-details">
+                            <summary class="user-row-summary">
+                                <span class="user-row-id" th:text="${u.id}"></span>
+                                <span class="user-row-name" th:text="${u.nombre}"></span>
+                                <span class="user-row-email" th:text="${u.correo != null ? u.correo : '—'}"></span>
+                                <span class="user-row-phone" th:text="${u.telefono != null and !u.telefono.isBlank() ? u.telefono : '—'}"></span>
+                                <span class="user-row-role" th:text="${u.rol != null ? u.rol.nombre : 'Sin rol'}"></span>
+                                <span>
+                                    <span class="badge success" th:if="${u.estatus == 1}">Activo</span>
+                                    <span class="badge warning" th:unless="${u.estatus == 1}">Inactivo</span>
+                                </span>
+                                <span class="user-row-hint">Ver detalles</span>
+                            </summary>
+                            <div class="user-expanded-grid">
+                                <div class="user-expanded-field">
+                                    <span>Correo</span>
+                                    <strong th:text="${u.correo != null ? u.correo : '—'}"></strong>
+                                </div>
+                                <div class="user-expanded-field">
+                                    <span>Teléfono</span>
+                                    <strong th:text="${u.telefono != null and !u.telefono.isBlank() ? u.telefono : '—'}"></strong>
+                                </div>
+                                <div class="user-expanded-field">
+                                    <span>Rol asignado</span>
+                                    <strong th:text="${u.rol != null ? u.rol.nombre : 'Sin rol'}"></strong>
+                                </div>
+                                <div class="user-expanded-actions">
+                                    <details>
+                                        <summary class="btn btn-secondary">Editar usuario</summary>
+                                        <form th:action="@{/usuarios/actualizar}" method="post" class="user-edit-form">
+                                            <input type="hidden" name="usuarioId" th:value="${u.id}">
+                                            <label>Nombre<input name="nombre" th:value="${u.nombre}" required></label>
+                                            <label>Correo<input type="email" name="correo" th:value="${u.correo}" required></label>
+                                            <label>Teléfono<input name="telefono" th:value="${u.telefono}"></label>
+                                            <label>Nueva contraseña<input type="password" name="clave" placeholder="Dejar vacía para mantenerla"></label>
+                                            <label>Rol<select name="rolId" required>
+                                                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}" th:selected="${u.rol != null and r.id == u.rol.id}"></option>
+                                            </select></label>
+                                            <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                                        </form>
+                                    </details>
+                                    <form th:if="${u.id != usuarioLogueado.id}" th:action="@{/usuarios/eliminar}" method="post"
+                                          onsubmit="return confirm('¿Eliminar este usuario? Si ya registró movimientos, la base de datos impedirá borrarlo.');">
+                                        <input type="hidden" name="usuarioId" th:value="${u.id}">
+                                        <button class="btn btn-danger" type="submit">Eliminar usuario</button>
+                                    </form>
+                                    <span th:if="${u.id == usuarioLogueado.id}" class="badge warning">Sesión actual</span>
+                                </div>
+                            </div>
                         </details>
-                        <form th:if="${u.id != usuarioLogueado.id}" th:action="@{/usuarios/eliminar}" method="post"
-                              onsubmit="return confirm('¿Eliminar este usuario? Si ya registró movimientos, la base de datos impedirá borrarlo.');">
-                            <input type="hidden" name="usuarioId" th:value="${u.id}">
-                            <button class="btn btn-danger" type="submit">Eliminar</button>
-                        </form>
-                        <span th:if="${u.id == usuarioLogueado.id}" class="badge warning">Sesión actual</span>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
+
+        <nav class="pagination" aria-label="Paginación de usuarios" th:if="${usuariosPagina.totalPages > 1}">
+            <a class="btn btn-secondary" th:if="${usuariosPagina.hasPrevious()}"
+               th:href="@{/usuarios(page=${usuariosPagina.number - 1})}" rel="prev">Anterior</a>
+            <span class="pagination-current" aria-current="page"
+                  th:text="${'Página ' + (usuariosPagina.number + 1) + ' de ' + usuariosPagina.totalPages}">Página 1 de 1</span>
+            <a class="btn btn-secondary" th:if="${usuariosPagina.hasNext()}"
+               th:href="@{/usuarios(page=${usuariosPagina.number + 1})}" rel="next">Siguiente</a>
+        </nav>
     </section>
 </div>
+
+<dialog id="crearUsuarioModal" class="user-modal" aria-labelledby="crearUsuarioTitulo">
+    <div class="user-modal-heading">
+        <div>
+            <h2 id="crearUsuarioTitulo">Crear usuario</h2>
+            <p class="muted-copy">Asigna VENDEDOR al personal de caja. Las contraseñas se guardan cifradas.</p>
+        </div>
+        <button class="btn btn-secondary modal-close" type="button" aria-label="Cerrar"
+                onclick="document.getElementById('crearUsuarioModal').close()">×</button>
+    </div>
+    <form th:action="@{/usuarios/guardar}" method="post" class="form-grid">
+        <div class="field">
+            <label for="nombre">Nombre completo</label>
+            <input id="nombre" type="text" name="nombre" placeholder="Nombre completo" required />
+        </div>
+        <div class="field">
+            <label for="correo">Correo</label>
+            <input id="correo" type="email" name="correo" placeholder="persona@correo.com" required />
+        </div>
+        <div class="field">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" type="tel" name="telefono" placeholder="Opcional" />
+        </div>
+        <div class="field">
+            <label for="clave">Contraseña</label>
+            <input id="clave" type="password" name="clave" placeholder="Contraseña" required />
+        </div>
+        <div class="field">
+            <label for="rolId">Rol</label>
+            <select id="rolId" name="rolId" required>
+                <option value="">Selecciona rol</option>
+                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
+            </select>
+        </div>
+        <div class="user-modal-actions">
+            <button class="btn btn-secondary" type="button" onclick="document.getElementById('crearUsuarioModal').close()">Cancelar</button>
+            <button class="btn btn-primary" type="submit">Guardar usuario</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="asignarRolModal" class="user-modal" aria-labelledby="asignarRolTitulo">
+    <div class="user-modal-heading">
+        <div>
+            <h2 id="asignarRolTitulo">Asignar rol a usuario</h2>
+            <p class="muted-copy">Selecciona el usuario y el rol que tendrá en el sistema.</p>
+        </div>
+        <button class="btn btn-secondary modal-close" type="button" aria-label="Cerrar"
+                onclick="document.getElementById('asignarRolModal').close()">×</button>
+    </div>
+    <form th:action="@{/usuarios/rol}" method="post" class="form-grid">
+        <div class="field">
+            <label for="usuarioId">Usuario</label>
+            <select id="usuarioId" name="usuarioId" required>
+                <option value="">Selecciona usuario</option>
+                <option th:each="u : ${usuarios}" th:value="${u.id}" th:text="${u.nombre + ' (' + u.correo + ')'}"></option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="nuevoRolId">Nuevo rol</label>
+            <select id="nuevoRolId" name="rolId" required>
+                <option value="">Selecciona rol</option>
+                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
+            </select>
+        </div>
+        <div class="user-modal-actions">
+            <button class="btn btn-secondary" type="button" onclick="document.getElementById('asignarRolModal').close()">Cancelar</button>
+            <button class="btn btn-primary" type="submit">Guardar rol</button>
+        </div>
+    </form>
+</dialog>
 </body>
 </html>

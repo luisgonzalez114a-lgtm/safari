@@ -567,6 +567,152 @@ a {
     position: relative;
 }
 
+.users-section {
+    margin-bottom: 18px;
+}
+
+.users-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.users-section-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 650;
+}
+
+.users-section-heading .muted-copy {
+    margin: 5px 0 0;
+}
+
+.users-section-actions,
+.user-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.users-table {
+    min-width: 1120px;
+    table-layout: fixed;
+}
+
+.users-table .user-row > td {
+    padding: 0 !important;
+}
+
+.user-row-details > summary {
+    list-style: none;
+}
+
+.user-row-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.user-row-summary {
+    display: grid;
+    grid-template-columns: 5% 17% 23% 15% 11% 10% 19%;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 9px 12px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.user-row-summary:hover,
+.user-row-details[open] .user-row-summary {
+    background: rgba(32, 107, 196, .09);
+}
+
+.user-row-summary:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.user-row-id,
+.user-row-name,
+.user-row-email,
+.user-row-phone,
+.user-row-role,
+.user-row-hint {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-row-name {
+    font-weight: 600;
+}
+
+.user-row-hint {
+    color: var(--muted);
+    font-size: .75rem;
+}
+
+.user-row-hint::after {
+    display: inline-block;
+    margin-left: 5px;
+    content: "▾";
+    transition: transform .15s ease;
+}
+
+.user-row-details[open] .user-row-hint::after {
+    transform: rotate(180deg);
+}
+
+.user-expanded-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px;
+    border-top: 1px solid var(--line);
+    background: rgba(32, 107, 196, .045);
+}
+
+.user-expanded-field {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.user-expanded-field > span {
+    color: var(--muted);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.user-expanded-field > strong {
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-size: .86rem;
+    font-weight: 600;
+}
+
+.user-expanded-actions {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.user-expanded-actions details {
+    position: relative;
+}
+
+.user-edit {
+    position: relative;
+}
+
 .user-edit-form {
     position: absolute;
     z-index: 5;
@@ -585,6 +731,68 @@ a {
 .user-edit-form label {
     display: grid;
     gap: 5px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.pagination-current {
+    color: var(--muted);
+    font-size: .84rem;
+    font-weight: 600;
+}
+
+.user-modal {
+    width: min(100% - 32px, 520px);
+    max-height: min(90vh, 760px);
+    overflow-y: auto;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+
+.user-modal::backdrop {
+    background: rgba(5, 12, 22, .68);
+    backdrop-filter: blur(2px);
+}
+
+.user-modal-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.user-modal-heading h2 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: 1.12rem;
+    font-weight: 650;
+}
+
+.user-modal-heading .muted-copy {
+    margin: 0;
+}
+
+.user-modal-actions {
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.modal-close {
+    min-width: 36px;
+    padding: 5px 10px;
+    font-size: 1.2rem;
+    line-height: 1;
 }
 
 .inline-action {
@@ -1142,6 +1350,35 @@ body {
 }
 
 @media (max-width: 700px) {
+    .users-section-heading {
+        flex-direction: column;
+    }
+
+    .users-section-actions {
+        width: 100%;
+    }
+
+    .pagination {
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .user-modal {
+        padding: 18px;
+    }
+
+    .user-modal-actions {
+        justify-content: stretch;
+    }
+
+    .user-modal-actions .btn {
+        flex: 1 1 auto;
+    }
+
+    .user-expanded-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .catalog-item-heading,
     .catalog-item-compact {
         align-items: flex-start;

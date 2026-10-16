@@ -6,6 +6,9 @@ import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +19,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class UsuarioWebController {
+    private static final int USUARIOS_POR_PAGINA = 9;
+
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
@@ -29,7 +34,7 @@ public class UsuarioWebController {
     }
 
     @GetMapping("/usuarios")
-    public String usuarios(HttpSession session, Model model) {
+    public String usuarios(@RequestParam(defaultValue = "0") int page, HttpSession session, Model model) {
         Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
         if (usuario == null) {
             return "redirect:/login";
@@ -38,7 +43,14 @@ public class UsuarioWebController {
             return "redirect:/";
         }
         model.addAttribute("usuarioLogueado", usuario);
-        model.addAttribute("usuarios", usuarioRepository.findAll());
+        Page<Usuario> usuariosPagina = usuarioRepository.findAll(
+                PageRequest.of(Math.max(page, 0), USUARIOS_POR_PAGINA, Sort.by("nombre").ascending()));
+        if (usuariosPagina.getTotalPages() > 0 && usuariosPagina.isEmpty()) {
+            usuariosPagina = usuarioRepository.findAll(PageRequest.of(
+                    usuariosPagina.getTotalPages() - 1, USUARIOS_POR_PAGINA, Sort.by("nombre").ascending()));
+        }
+        model.addAttribute("usuarios", usuarioRepository.findAll(Sort.by("nombre").ascending()));
+        model.addAttribute("usuariosPagina", usuariosPagina);
         model.addAttribute("roles", rolRepository.findAll());
         model.addAttribute("usuarioForm", new Usuario());
         return "usuarios";

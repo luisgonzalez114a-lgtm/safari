@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -45,6 +46,44 @@ class AdminUsersAndRolesIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Test
+    void administratorCanBrowseUsersGridAcrossPages() throws Exception {
+        MockHttpSession adminSession = adminSession();
+        Usuario admin = usuarioRepository.findByCorreo("admin@safari.com").orElseThrow();
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+
+        for (int i = 0; i < 10; i++) {
+            Usuario user = new Usuario();
+            user.setNombre("ZZZ Page User " + i);
+            user.setCorreo("page-" + suffix + "-" + i + "@example.com");
+            user.setClave(passwordEncoder.encode("page-pass"));
+            user.setEstatus(1);
+            user.setRol(admin.getRol());
+            usuarioRepository.save(user);
+        }
+        long totalPages = (usuarioRepository.count() + 8) / 9;
+
+        mockMvc.perform(get("/usuarios").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("users-table")))
+                .andExpect(content().string(containsString("user-row-details")))
+                .andExpect(content().string(containsString("user-expanded-grid")))
+                .andExpect(content().string(containsString("id=\"crearUsuarioModal\"")))
+                .andExpect(content().string(containsString("id=\"asignarRolModal\"")))
+                .andExpect(content().string(containsString("href=\"/usuarios?page=1\"")))
+                .andExpect(content().string(containsString("Página 1 de")));
+
+        mockMvc.perform(get("/usuarios").param("page", "1").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Página 2 de")))
+                .andExpect(content().string(containsString("href=\"/usuarios?page=0\"")))
+                .andExpect(content().string(containsString("ZZZ Page User")));
+
+        mockMvc.perform(get("/usuarios").param("page", "999").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Página " + totalPages + " de " + totalPages)));
+    }
 
     @Test
     void administratorCanCreateEditViewAndDeleteUsersAndRoles() throws Exception {
