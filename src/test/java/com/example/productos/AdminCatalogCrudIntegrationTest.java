@@ -3,6 +3,8 @@ package com.example.productos;
 import com.example.productos.model.Usuario;
 import com.example.productos.model.Entrada;
 import com.example.productos.model.Producto;
+import com.example.productos.model.AuditoriaLog;
+import com.example.productos.repository.AuditoriaLogRepository;
 import com.example.productos.repository.CategoriaRepository;
 import com.example.productos.repository.EntradaRepository;
 import com.example.productos.repository.MarcaRepository;
@@ -21,7 +23,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.Set;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,6 +51,9 @@ class AdminCatalogCrudIntegrationTest {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private AuditoriaLogRepository auditoriaLogRepository;
 
     @Autowired
     private CategoriaRepository categoriaRepository;
@@ -160,6 +167,14 @@ class AdminCatalogCrudIntegrationTest {
         assertFalse(proveedorRepository.existsById(supplier.getId()));
         assertFalse(marcaRepository.existsById(brand.getId()));
         assertFalse(categoriaRepository.existsById(updatedCategoryId));
+        Set<String> auditActions = auditoriaLogRepository.findAll().stream()
+                .map(AuditoriaLog::getAccion)
+                .collect(Collectors.toSet());
+        assertTrue(auditActions.containsAll(Set.of(
+                "CREAR_CATEGORIA", "EDITAR_CATEGORIA", "ELIMINAR_CATEGORIA",
+                "CREAR_MARCA", "EDITAR_MARCA", "ELIMINAR_MARCA",
+                "CREAR_PROVEEDOR", "EDITAR_PROVEEDOR", "ELIMINAR_PROVEEDOR",
+                "CREAR_PRODUCTO", "EDITAR_PRODUCTO", "ELIMINAR_PRODUCTO")));
     }
 
     @Test
@@ -222,6 +237,7 @@ class AdminCatalogCrudIntegrationTest {
         mockMvc.perform(get("/catalogos/proveedores").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("suppliers-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("catalog-add-disclosure")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir proveedor")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Editar proveedor")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Eliminar proveedor")))
@@ -233,6 +249,7 @@ class AdminCatalogCrudIntegrationTest {
         mockMvc.perform(get("/catalogos/marcas").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("brands-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("catalog-add-disclosure")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir marca")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(brandName)))
                 .andExpect(content().string(org.hamcrest.Matchers.not(
@@ -242,6 +259,7 @@ class AdminCatalogCrudIntegrationTest {
         mockMvc.perform(get("/catalogos/categorias").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("categories-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("catalog-add-disclosure")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir categoría")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Editar categoría")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Eliminar categoría")))

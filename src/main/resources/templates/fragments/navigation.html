@@ -5,31 +5,36 @@
     </a>
 
     <div class="sidebar-label">MENÚ</div>
-    <details class="sidebar-group" th:open="${activePage == 'inventory' or activePage == 'entries' or activePage == 'sales'}">
+    <details class="sidebar-group"
+             th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/inventario', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/entradas', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/salidas', 'CONSULTAR')}"
+             th:open="${activePage == 'inventory' or activePage == 'entries' or activePage == 'sales'}">
         <summary class="sidebar-group-summary">Inventario</summary>
-        <a class="sidebar-link sidebar-sublink" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
-        <a class="sidebar-link sidebar-sublink" th:if="${usuarioLogueado.tieneRol('ADMIN') or usuarioLogueado.tieneRol('VENDEDOR')}"
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/inventario', 'CONSULTAR')}" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/entradas', 'CONSULTAR')}"
            th:href="@{/entradas}" th:classappend="${activePage == 'entries'} ? ' active' : ''">Entradas</a>
-        <a class="sidebar-link sidebar-sublink" th:if="${usuarioLogueado.tieneRol('ADMIN') or usuarioLogueado.tieneRol('VENDEDOR')}"
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/salidas', 'CONSULTAR')}"
            th:href="@{/salidas}" th:classappend="${activePage == 'sales'} ? ' active' : ''">Ventas y salidas</a>
     </details>
 
-    <details class="sidebar-group" th:if="${usuarioLogueado.tieneRol('ADMIN')}"
+    <details class="sidebar-group"
+             th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/proveedores', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/marcas', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/categorias', 'CONSULTAR')}"
              th:open="${activePage == 'suppliers' or activePage == 'brands' or activePage == 'categories'}">
         <summary class="sidebar-group-summary">Catálogos</summary>
-        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/proveedores}"
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/proveedores', 'CONSULTAR')}" th:href="@{/catalogos/proveedores}"
            th:classappend="${activePage == 'suppliers'} ? ' active' : ''">Proveedores</a>
-        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/marcas}"
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/marcas', 'CONSULTAR')}" th:href="@{/catalogos/marcas}"
            th:classappend="${activePage == 'brands'} ? ' active' : ''">Marcas</a>
-        <a class="sidebar-link sidebar-sublink" th:href="@{/catalogos/categorias}"
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/catalogos/categorias', 'CONSULTAR')}" th:href="@{/catalogos/categorias}"
            th:classappend="${activePage == 'categories'} ? ' active' : ''">Categorías</a>
     </details>
 
     <details class="sidebar-group" th:if="${usuarioLogueado.tieneRol('ADMIN')}"
-             th:open="${activePage == 'users' or activePage == 'roles'}">
+             th:open="${activePage == 'users' or activePage == 'roles' or activePage == 'permissions' or activePage == 'audit'}">
         <summary class="sidebar-group-summary">Usuarios y roles</summary>
         <a class="sidebar-link sidebar-sublink" th:href="@{/usuarios}" th:classappend="${activePage == 'users'} ? ' active' : ''">Usuarios</a>
         <a class="sidebar-link sidebar-sublink" th:href="@{/roles}" th:classappend="${activePage == 'roles'} ? ' active' : ''">Roles</a>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/roles/permisos}" th:classappend="${activePage == 'permissions'} ? ' active' : ''">Permisos</a>
+        <a class="sidebar-link sidebar-sublink" th:href="@{/auditoria}" th:classappend="${activePage == 'audit'} ? ' active' : ''">Auditoría</a>
     </details>
 
 </nav>

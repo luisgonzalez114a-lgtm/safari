@@ -4,6 +4,7 @@ import com.example.productos.model.Rol;
 import com.example.productos.model.Usuario;
 import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
+import com.example.productos.service.AuditService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,13 +30,16 @@ public class UsuarioWebController {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     public UsuarioWebController(UsuarioRepository usuarioRepository,
                                 RolRepository rolRepository,
-                                PasswordEncoder passwordEncoder) {
+                                PasswordEncoder passwordEncoder,
+                                AuditService auditService) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     @GetMapping("/usuarios")
@@ -61,6 +66,7 @@ public class UsuarioWebController {
     }
 
     @PostMapping("/usuarios/guardar")
+    @Transactional
     public String guardarUsuario(@RequestParam String nombre,
                                  @RequestParam String correo,
                                  @RequestParam String clave,
@@ -92,11 +98,13 @@ public class UsuarioWebController {
         usuario.setEstatus(1);
         usuario.setRoles(roles);
         usuarioRepository.save(usuario);
+        auditService.registrar(usuarioDeSesion(session).getId(), "CREAR_USUARIO", "usuarios", usuario.getId());
         attributes.addFlashAttribute("mensaje", "Usuario creado.");
         return "redirect:/usuarios";
     }
 
     @PostMapping("/usuarios/actualizar")
+    @Transactional
     public String actualizarUsuario(@RequestParam Integer usuarioId,
                                     @RequestParam String nombre,
                                     @RequestParam String correo,
@@ -140,6 +148,7 @@ public class UsuarioWebController {
         }
         actual.setRoles(roles);
         usuarioRepository.save(actual);
+        auditService.registrar(admin.getId(), "EDITAR_USUARIO", "usuarios", actual.getId());
         if (actual.getId().equals(admin.getId())) {
             session.setAttribute("usuarioLogueado", actual);
         }
@@ -148,6 +157,7 @@ public class UsuarioWebController {
     }
 
     @PostMapping("/usuarios/eliminar")
+    @Transactional
     public String eliminarUsuario(@RequestParam Integer usuarioId,
                                   HttpSession session,
                                   RedirectAttributes attributes) {
@@ -161,6 +171,7 @@ public class UsuarioWebController {
         }
         try {
             usuarioRepository.deleteById(usuarioId);
+            auditService.registrar(admin.getId(), "ELIMINAR_USUARIO", "usuarios", usuarioId);
             attributes.addFlashAttribute("mensaje", "Usuario eliminado.");
         } catch (DataIntegrityViolationException exception) {
             attributes.addFlashAttribute("error", "No se puede eliminar: el usuario ya tiene movimientos registrados.");
@@ -169,6 +180,7 @@ public class UsuarioWebController {
     }
 
     @PostMapping("/usuarios/estado")
+    @Transactional
     public String cambiarEstadoUsuario(@RequestParam Integer usuarioId,
                                        HttpSession session,
                                        RedirectAttributes attributes) {
@@ -188,11 +200,14 @@ public class UsuarioWebController {
         boolean activar = usuario.getEstatus() == null || usuario.getEstatus() != 1;
         usuario.setEstatus(activar ? 1 : 0);
         usuarioRepository.save(usuario);
+        auditService.registrar(admin.getId(), activar ? "ACTIVAR_USUARIO" : "DESACTIVAR_USUARIO",
+                "usuarios", usuario.getId());
         attributes.addFlashAttribute("mensaje", activar ? "Usuario activado." : "Usuario desactivado.");
         return "redirect:/usuarios";
     }
 
     @PostMapping("/usuarios/rol")
+    @Transactional
     public String actualizarRolUsuario(@RequestParam Integer usuarioId,
                                        @RequestParam(required = false) List<Integer> rolesIds,
                                        HttpSession session,
@@ -208,6 +223,8 @@ public class UsuarioWebController {
         }
         usuario.setRoles(roles);
         usuarioRepository.save(usuario);
+        auditService.registrar(usuarioDeSesion(session).getId(), "ROLES_USUARIO_ACTUALIZADOS",
+                "usuario_roles", usuario.getId());
         attributes.addFlashAttribute("mensaje", "Rol actualizado.");
         return "redirect:/usuarios";
     }
@@ -228,6 +245,7 @@ public class UsuarioWebController {
     }
 
     @PostMapping("/roles/guardar")
+    @Transactional
     public String guardarRol(@RequestParam String nombre,
                              HttpSession session,
                              RedirectAttributes attributes) {
@@ -245,6 +263,7 @@ public class UsuarioWebController {
         Rol rol = new Rol();
         rol.setNombre(nombre.trim());
         rolRepository.save(rol);
+        auditService.registrar(usuarioDeSesion(session).getId(), "CREAR_ROL", "roles", rol.getId());
         attributes.addFlashAttribute("mensaje", "Rol creado.");
         return "redirect:/roles";
     }

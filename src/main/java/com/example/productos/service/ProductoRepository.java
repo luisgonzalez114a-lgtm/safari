@@ -8,12 +8,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     boolean existsByCodigoIgnoreCase(String codigo);
     boolean existsByCodigoIgnoreCaseAndIdNot(String codigo, Integer id);
     boolean existsByIdMarca(Integer idMarca);
     boolean existsByIdCategoria(Integer idCategoria);
+
+    @Query("select coalesce(sum(p.stockActual), 0) from Producto p")
+    Long totalUnidadesEnStock();
+
+    @Query("select count(p) from Producto p where p.stockActual <= p.stockMinimo")
+    long contarProductosEnStockMinimo();
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Producto p where p.id = :id")

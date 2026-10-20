@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.4}">
 </head>
 <body>
 <div class="app-shell" th:classappend="${esCliente} ? ' public-shell' : ''">
@@ -30,22 +30,83 @@
     <section class="hero-grid">
         <div class="stat-card">
             <span class="stat-label">Productos</span>
-            <span class="stat-value" th:text="${#lists.size(productos)}">0</span>
+            <span class="stat-value" th:text="${dashboard.totalProductos}">0</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Control</span>
-            <span class="stat-value">Stock</span>
+            <span class="stat-label">Unidades disponibles</span>
+            <span class="stat-value" th:text="${dashboard.unidadesEnStock}">0</span>
         </div>
-        <div class="stat-card">
-            <span class="stat-label">Base de datos</span>
-            <span class="stat-value">SAFARI</span>
+        <div class="stat-card" th:if="${usuarioLogueado != null}">
+            <span class="stat-label">Productos en stock mínimo</span>
+            <span class="stat-value" th:text="${dashboard.productosEnStockMinimo}">0</span>
         </div>
+        <div class="stat-card" th:if="${usuarioLogueado != null}">
+            <span class="stat-label">Entradas este mes</span>
+            <span class="stat-value" th:text="${dashboard.entradasDelMes}">0</span>
+        </div>
+        <div class="stat-card" th:if="${usuarioLogueado != null}">
+            <span class="stat-label">Ventas este mes</span>
+            <span class="stat-value" th:text="${dashboard.ventasDelMes}">0</span>
+        </div>
+        <div class="stat-card" th:if="${usuarioLogueado != null}">
+            <span class="stat-label">Monto vendido este mes</span>
+            <span class="stat-value" th:text="${'$' + #numbers.formatDecimal(dashboard.totalVentasDelMes, 1, 2)}">$0.00</span>
+        </div>
+    </section>
+
+    <section class="dashboard-analytics" th:if="${usuarioLogueado != null}" aria-label="Indicadores gráficos del inventario">
+        <article class="panel analytics-card">
+            <h2>Estado del inventario</h2>
+            <div class="analytics-item">
+                <div class="analytics-label">
+                    <span>Productos en stock mínimo</span>
+                    <strong th:text="${dashboard.porcentajeStockMinimo() + '%'}">0%</strong>
+                </div>
+                <div class="analytics-track" role="progressbar" aria-label="Porcentaje de productos en stock mínimo"
+                     aria-valuemin="0" aria-valuemax="100"
+                     th:attr="aria-valuenow=${dashboard.porcentajeStockMinimo()}">
+                    <span class="analytics-bar stock-bar"
+                          th:style="'width:' + ${dashboard.porcentajeStockMinimo()} + '%'"></span>
+                </div>
+                <small class="muted-copy"
+                       th:text="${dashboard.productosEnStockMinimo() + ' de ' + dashboard.totalProductos() + ' productos'}">
+                    0 de 0 productos
+                </small>
+            </div>
+        </article>
+        <article class="panel analytics-card">
+            <h2>Actividad de este mes</h2>
+            <div class="analytics-item">
+                <div class="analytics-label">
+                    <span>Entradas</span>
+                    <strong th:text="${dashboard.entradasDelMes}">0</strong>
+                </div>
+                <div class="analytics-track" role="progressbar" aria-label="Entradas del mes relativas a la actividad máxima"
+                     aria-valuemin="0" aria-valuemax="100"
+                     th:attr="aria-valuenow=${dashboard.porcentajeEntradasDelMes()}">
+                    <span class="analytics-bar entry-bar"
+                          th:style="'width:' + ${dashboard.porcentajeEntradasDelMes()} + '%'"></span>
+                </div>
+            </div>
+            <div class="analytics-item">
+                <div class="analytics-label">
+                    <span>Ventas</span>
+                    <strong th:text="${dashboard.ventasDelMes}">0</strong>
+                </div>
+                <div class="analytics-track" role="progressbar" aria-label="Ventas del mes relativas a la actividad máxima"
+                     aria-valuemin="0" aria-valuemax="100"
+                     th:attr="aria-valuenow=${dashboard.porcentajeVentasDelMes()}">
+                    <span class="analytics-bar sales-bar"
+                          th:style="'width:' + ${dashboard.porcentajeVentasDelMes()} + '%'"></span>
+                </div>
+            </div>
+        </article>
     </section>
 
     <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
 
     <div class="layout wide-layout">
-        <aside class="panel" th:if="${esAdmin}">
+        <aside class="panel" th:if="${puedeCrearProducto or puedeEditarProducto}">
             <div class="section-heading-row">
                 <h2 th:text="${producto.id != null} ? 'Editar producto' : 'Inventario'">Inventario</h2>
             </div>
@@ -111,7 +172,24 @@
         <main class="panel">
             <h2 class="section-title">Listado de productos</h2>
             <div class="table-wrap">
-                <table class="table table-vcenter data-table">
+                <table class="table table-vcenter data-table inventory-table">
+                    <colgroup th:if="${puedeGestionarProducto}">
+                        <col style="width: 6%">
+                        <col style="width: 12%">
+                        <col style="width: 16%">
+                        <col style="width: 20%">
+                        <col style="width: 17%">
+                        <col style="width: 11%">
+                        <col style="width: 18%">
+                    </colgroup>
+                    <colgroup th:unless="${puedeGestionarProducto}">
+                        <col style="width: 6%">
+                        <col style="width: 12%">
+                        <col style="width: 16%">
+                        <col style="width: 20%">
+                        <col style="width: 17%">
+                        <col style="width: 29%">
+                    </colgroup>
                     <thead>
                     <tr>
                         <th>ID</th>
@@ -120,31 +198,40 @@
                         <th>Descripción</th>
                         <th>Precio actual</th>
                         <th>Stock</th>
-                        <th th:if="${esAdmin}">Acciones</th>
+                        <th th:if="${puedeGestionarProducto}">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(productos)}">
-                        <td class="empty-state" th:colspan="${esAdmin} ? 7 : 6">Todavía no hay productos.</td>
+                        <td class="empty-state" th:colspan="${puedeGestionarProducto} ? 7 : 6">Todavía no hay productos.</td>
                     </tr>
                     <tr class="inventory-row" th:each="p : ${productos}">
-                        <td th:colspan="${esAdmin} ? 7 : 6">
-                            <details class="inventory-row-details" th:classappend="${esAdmin} ? ' inventory-admin-row' : ' inventory-public-row'">
+                        <td th:colspan="${puedeGestionarProducto} ? 7 : 6">
+                            <details class="inventory-row-details" th:classappend="${puedeGestionarProducto} ? ' inventory-admin-row' : ' inventory-public-row'">
                                 <summary class="inventory-row-summary">
                                     <span th:text="${p.id}"></span>
                                     <strong th:text="${p.codigo}"></strong>
                                     <strong th:text="${p.nombre}"></strong>
                                     <span class="inventory-description" th:text="${p.descripcion != null and !p.descripcion.isBlank() ? p.descripcion : '—'}"></span>
                                     <span class="price-cell" th:text="${#numbers.formatDecimal(p.precioActual, 1, 2)}"></span>
-                                    <span class="stock-pill" th:classappend="${p.stockActual <= p.stockMinimo} ? ' stock-low' : ''" th:text="${p.stockActual}"></span>
-                                    <span class="catalog-row-hint" th:if="${esAdmin}">Ver detalle</span>
+                                    <span class="stock-pill"
+                                          th:with="stockActual=${p.stockActual != null ? p.stockActual : 0},
+                                                   minimumStock=${p.stockMinimo != null ? p.stockMinimo : 0},
+                                                   stockPercent=${minimumStock > 0 ? (stockActual >= minimumStock ? 100 : stockActual * 100 / minimumStock) : 100},
+                                                   stockHue=${stockPercent * 1.2}"
+                                          th:classappend="${stockActual <= 0 ? ' stock-unavailable' : ' stock-level'}"
+                                          th:style="${stockActual > 0 ? '--stock-hue: ' + stockHue + 'deg' : null}"
+                                          th:attr="aria-label=${stockActual <= 0 ? 'No disponible' : 'Stock actual: ' + stockActual + ', ' + stockPercent + '% del stock mínimo'},
+                                                   title=${stockActual <= 0 ? 'No hay existencias disponibles' : 'Nivel relativo al stock mínimo: ' + stockPercent + '%'}"
+                                          th:text="${stockActual <= 0 ? 'No disponible' : stockActual}"></span>
+                                    <span class="catalog-row-hint" th:if="${puedeGestionarProducto}">Ver detalle</span>
                                 </summary>
                                 <div class="inventory-row-expanded">
                                     <span th:if="${esAdmin}"><strong>Precio de compra:</strong> <span th:text="${#numbers.formatDecimal(p.precioCompra, 1, 2)}"></span></span>
                                     <span th:if="${esAdmin}"><strong>Stock mínimo:</strong> <span th:text="${p.stockMinimo}"></span></span>
-                                    <div class="button-row" th:if="${esAdmin}">
-                                        <a class="btn btn-primary" th:href="@{/productos/editar/{id}(id=${p.id})}">Editar</a>
-                                        <form th:action="@{/productos/eliminar/{id}(id=${p.id})}" method="post" class="inline-action">
+                                    <div class="button-row" th:if="${puedeGestionarProducto}">
+                                        <a class="btn btn-primary" th:if="${puedeEditarProducto}" th:href="@{/productos/editar/{id}(id=${p.id})}">Editar</a>
+                                        <form th:if="${puedeEliminarProducto}" th:action="@{/productos/eliminar/{id}(id=${p.id})}" method="post" class="inline-action">
                                             <button class="btn btn-danger" type="submit">Eliminar</button>
                                         </form>
                                     </div>

@@ -59,6 +59,8 @@ class WebControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir al inventario")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-table")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("width: 20%")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-row-details")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Inventario")));
     }
@@ -87,6 +89,32 @@ class WebControllerTest {
 
         Producto editedProduct = (Producto) result.getModelAndView().getModel().get("producto");
         assertEquals("Producto para editar", editedProduct.getNombre());
+    }
+
+    @Test
+    void inventoryShowsStockLevelAndUnavailableState() throws Exception {
+        Producto halfStock = crearProducto("STOCK-HALF", "Producto mitad", 5, 10);
+        Producto emptyStock = crearProducto("STOCK-EMPTY", "Producto agotado", 0, 10);
+
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("stock-level")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("--stock-hue: 60.0deg")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No disponible")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("stock-unavailable")));
+
+        productoRepository.deleteAll(java.util.List.of(halfStock, emptyStock));
+    }
+
+    private Producto crearProducto(String codigo, String nombre, int stock, int stockMinimo) {
+        Producto producto = new Producto();
+        producto.setCodigo(codigo);
+        producto.setNombre(nombre);
+        producto.setPrecioCompra(java.math.BigDecimal.ONE);
+        producto.setPrecioActual(java.math.BigDecimal.ONE);
+        producto.setStockActual(stock);
+        producto.setStockMinimo(stockMinimo);
+        return productoRepository.saveAndFlush(producto);
     }
 
     private Usuario usuarioAdmin() {

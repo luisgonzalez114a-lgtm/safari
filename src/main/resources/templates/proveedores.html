@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proveedores - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
 </head>
 <body>
 <div class="app-shell">
@@ -21,9 +21,8 @@
     <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
     <section class="panel">
-        <div class="section-heading-row">
-            <h2>Añadir proveedor</h2>
-            <details class="add-disclosure">
+        <h2>Añadir proveedor</h2>
+        <details class="add-disclosure catalog-add-disclosure" th:if="${puedeCrear}">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir proveedor</summary>
                 <div class="disclosure-content">
                     <form th:action="@{/catalogos/proveedores}" method="post" class="form-grid">
@@ -35,8 +34,7 @@
                         <button class="btn btn-primary" type="submit">Guardar proveedor</button>
                     </form>
                 </div>
-            </details>
-        </div>
+        </details>
     </section>
 
     <section class="panel">
@@ -52,12 +50,12 @@
                     <th>Teléfono</th>
                     <th>Correo</th>
                     <th>Dirección</th>
-                    <th>Acciones</th>
+                    <th th:if="${puedeEditar or puedeEliminar}">Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr class="supplier-row" th:each="p : ${proveedores}">
-                    <td colspan="7">
+                    <td th:colspan="${puedeEditar or puedeEliminar} ? 7 : 6">
                         <details class="supplier-row-details">
                             <summary class="supplier-row-summary">
                                 <span th:text="${p.id}"></span>
@@ -66,10 +64,10 @@
                                 <span th:text="${p.telefono != null ? p.telefono : '—'}"></span>
                                 <span th:text="${p.correo != null ? p.correo : '—'}"></span>
                                 <span class="supplier-address" th:text="${p.direccion != null ? p.direccion : '—'}"></span>
-                                <span class="catalog-row-hint">Ver acciones</span>
+                                <span class="catalog-row-hint" th:if="${puedeEditar or puedeEliminar}">Ver acciones</span>
                             </summary>
-                            <div class="supplier-expanded">
-                                <details class="supplier-inline-edit">
+                            <div class="supplier-expanded" th:if="${puedeEditar or puedeEliminar}">
+                                <details class="supplier-inline-edit" th:if="${puedeEditar}">
                                     <summary class="btn btn-secondary">Editar proveedor</summary>
                                     <form th:action="@{/catalogos/proveedores/actualizar}" method="post" class="supplier-edit-form">
                                         <input type="hidden" name="id" th:value="${p.id}">
@@ -81,7 +79,7 @@
                                         <button class="btn btn-primary" type="submit">Guardar cambios</button>
                                     </form>
                                 </details>
-                                <form th:action="@{/catalogos/proveedores/eliminar}" method="post">
+                                <form th:if="${puedeEliminar}" th:action="@{/catalogos/proveedores/eliminar}" method="post">
                                     <input type="hidden" name="id" th:value="${p.id}">
                                     <button class="btn btn-danger" type="submit">Eliminar proveedor</button>
                                 </form>

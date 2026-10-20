@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marcas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
 </head>
 <body>
 <div class="app-shell">
@@ -21,9 +21,8 @@
     <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
     <section class="panel">
-        <div class="section-heading-row">
-            <h2>Añadir marca</h2>
-            <details class="add-disclosure">
+        <h2>Añadir marca</h2>
+        <details class="add-disclosure catalog-add-disclosure" th:if="${puedeCrear}">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir marca</summary>
                 <div class="disclosure-content">
                     <form th:action="@{/catalogos/marcas}" method="post" class="form-grid">
@@ -31,8 +30,7 @@
                         <button class="btn btn-primary" type="submit">Guardar marca</button>
                     </form>
                 </div>
-            </details>
-        </div>
+        </details>
     </section>
 
     <section class="panel">
@@ -40,20 +38,20 @@
         <div class="table-wrap">
             <table class="table table-vcenter data-table catalog-rows-table brands-table">
                 <thead>
-                <tr><th>ID</th><th>Marca</th><th>Acciones</th></tr>
+                <tr><th>ID</th><th>Marca</th><th th:if="${puedeEditar or puedeEliminar}">Acciones</th></tr>
                 </thead>
                 <tbody>
-                <tr th:if="${#lists.isEmpty(marcas)}"><td class="empty-state" colspan="3">Aún no hay marcas registradas.</td></tr>
+                <tr th:if="${#lists.isEmpty(marcas)}"><td class="empty-state" th:colspan="${puedeEditar or puedeEliminar} ? 3 : 2">Aún no hay marcas registradas.</td></tr>
                 <tr class="catalog-row" th:each="m : ${marcas}">
-                    <td colspan="3">
+                    <td th:colspan="${puedeEditar or puedeEliminar} ? 3 : 2">
                         <details class="catalog-row-details">
                             <summary class="catalog-row-summary brand-row-summary">
                                 <span th:text="${m.id}"></span>
                                 <strong th:text="${m.nombre}">Marca</strong>
-                                <span class="catalog-row-hint">Ver acciones</span>
+                                <span class="catalog-row-hint" th:if="${puedeEditar or puedeEliminar}">Ver acciones</span>
                             </summary>
-                            <div class="catalog-row-expanded">
-                                <details class="catalog-inline-edit">
+                            <div class="catalog-row-expanded" th:if="${puedeEditar or puedeEliminar}">
+                                <details class="catalog-inline-edit" th:if="${puedeEditar}">
                                     <summary class="btn btn-secondary">Editar marca</summary>
                                     <form th:action="@{/catalogos/marcas/actualizar}" method="post" class="catalog-edit-form">
                                         <input type="hidden" name="id" th:value="${m.id}">
@@ -61,7 +59,7 @@
                                         <button class="btn btn-primary" type="submit">Guardar cambios</button>
                                     </form>
                                 </details>
-                                <form th:action="@{/catalogos/marcas/eliminar}" method="post">
+                                <form th:if="${puedeEliminar}" th:action="@{/catalogos/marcas/eliminar}" method="post">
                                     <input type="hidden" name="id" th:value="${m.id}">
                                     <button class="btn btn-danger" type="submit">Eliminar marca</button>
                                 </form>

@@ -10,9 +10,11 @@ import com.example.productos.repository.MarcaRepository;
 import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
 import com.example.productos.repository.ProveedorRepository;
+import com.example.productos.service.RbacService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
@@ -24,7 +26,10 @@ public class DataSeeder {
                                MarcaRepository marcaRepository,
                                CategoriaRepository categoriaRepository,
                                ProveedorRepository proveedorRepository,
-                               PasswordEncoder passwordEncoder) {
+                               RbacService rbacService,
+                               PasswordEncoder passwordEncoder,
+                               @Value("${safari.admin.initial-password:admin123}") String adminInitialPassword,
+                               @Value("${safari.seed.demo-users:true}") boolean seedDemoUsers) {
         return args -> {
             Rol adminRol = rolRepository.findAll().stream()
                     .filter(r -> r.getNombre() != null && r.getNombre().equalsIgnoreCase("ADMIN"))
@@ -90,13 +95,13 @@ public class DataSeeder {
                 admin.setNombre("Administrador");
                 admin.setTelefono("0000000000");
                 admin.setCorreo("admin@safari.com");
-                admin.setClave(passwordEncoder.encode("admin123"));
+                admin.setClave(passwordEncoder.encode(adminInitialPassword));
                 admin.setRoles(java.util.Set.of(adminRol));
                 admin.setEstatus(1);
                 usuarioRepository.save(admin);
             }
 
-            if (usuarioRepository.findByCorreo("usuario@safari.com").isEmpty()) {
+            if (seedDemoUsers && usuarioRepository.findByCorreo("usuario@safari.com").isEmpty()) {
                 Usuario usuario = new Usuario();
                 usuario.setNombre("Usuario normal");
                 usuario.setTelefono("1111111111");
@@ -107,7 +112,7 @@ public class DataSeeder {
                 usuarioRepository.save(usuario);
             }
 
-            if (usuarioRepository.findByCorreo("vendedor@safari.com").isEmpty()) {
+            if (seedDemoUsers && usuarioRepository.findByCorreo("vendedor@safari.com").isEmpty()) {
                 Usuario vendedor = new Usuario();
                 vendedor.setNombre("Vendedor de prueba");
                 vendedor.setTelefono("555-0101");
@@ -117,6 +122,8 @@ public class DataSeeder {
                 vendedor.setEstatus(1);
                 usuarioRepository.save(vendedor);
             }
+
+            rbacService.inicializarCatalogoYPermisos();
         };
     }
 }

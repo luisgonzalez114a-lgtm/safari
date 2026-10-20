@@ -2,6 +2,7 @@ package com.example.productos.controller;
 
 import com.example.productos.model.Usuario;
 import com.example.productos.repository.UsuarioRepository;
+import com.example.productos.service.AuditService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,10 +18,13 @@ import java.util.Optional;
 public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder,
+                          AuditService auditService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     @GetMapping("/login")
@@ -46,6 +50,7 @@ public class AuthController {
         }).orElse(false);
         if (usuarioOpt.isEmpty() || !passwordMatches
                 || usuarioOpt.get().getEstatus() == null || usuarioOpt.get().getEstatus() != 1) {
+            auditService.registrar(null, "INICIO_SESION_FALLIDO", "usuarios", null);
             redirectAttributes.addFlashAttribute("error", "Correo o contraseña incorrectos.");
             return "redirect:/login";
         }
@@ -56,11 +61,16 @@ public class AuthController {
             usuarioRepository.save(usuario);
         }
         session.setAttribute("usuarioLogueado", usuario);
+        auditService.registrar(usuario.getId(), "INICIO_SESION", "usuarios", usuario.getId());
         return "redirect:/";
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
+        Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
+        if (usuario != null) {
+            auditService.registrar(usuario.getId(), "CIERRE_SESION", "usuarios", usuario.getId());
+        }
         session.invalidate();
         return "redirect:/login";
     }

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('audit')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Auditoría del sistema</h1>
+            <small>Últimas 100 acciones registradas</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+
+    <section class="panel">
+        <h2>Historial de actividad</h2>
+        <div class="table-wrap">
+            <table class="table table-vcenter data-table">
+                <thead>
+                <tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Tabla</th><th>ID del registro</th></tr>
+                </thead>
+                <tbody>
+                <tr th:if="${registros.empty}">
+                    <td class="empty-state" colspan="5">Todavía no hay acciones auditadas.</td>
+                </tr>
+                <tr th:each="registro : ${registros}">
+                    <td th:text="${#temporals.format(registro.fechaHora, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                    <td th:text="${registro.usuario != null ? registro.usuario.nombre : 'Sistema / usuario eliminado'}"></td>
+                    <td th:text="${registro.accion}"></td>
+                    <td th:text="${registro.tablaAfectada}"></td>
+                    <td th:text="${registro.registroId != null ? registro.registroId : '—'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

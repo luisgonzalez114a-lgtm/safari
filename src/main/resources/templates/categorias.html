@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Categorías - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
 </head>
 <body>
 <div class="app-shell">
@@ -21,9 +21,8 @@
     <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
     <section class="panel">
-        <div class="section-heading-row">
-            <h2>Añadir categoría</h2>
-            <details class="add-disclosure">
+        <h2>Añadir categoría</h2>
+        <details class="add-disclosure catalog-add-disclosure" th:if="${puedeCrear}">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir categoría</summary>
                 <div class="disclosure-content">
                     <form th:action="@{/catalogos/categorias}" method="post" class="form-grid">
@@ -32,8 +31,7 @@
                         <button class="btn btn-primary" type="submit">Guardar categoría</button>
                     </form>
                 </div>
-            </details>
-        </div>
+        </details>
     </section>
 
     <section class="panel">
@@ -41,21 +39,21 @@
         <div class="table-wrap">
             <table class="table table-vcenter data-table catalog-rows-table categories-table">
                 <thead>
-                <tr><th>ID</th><th>Categoría</th><th>Descripción</th><th>Acciones</th></tr>
+                <tr><th>ID</th><th>Categoría</th><th>Descripción</th><th th:if="${puedeEditar or puedeEliminar}">Acciones</th></tr>
                 </thead>
                 <tbody>
-                <tr th:if="${#lists.isEmpty(categorias)}"><td class="empty-state" colspan="4">Aún no hay categorías registradas.</td></tr>
+                <tr th:if="${#lists.isEmpty(categorias)}"><td class="empty-state" th:colspan="${puedeEditar or puedeEliminar} ? 4 : 3">Aún no hay categorías registradas.</td></tr>
                 <tr class="catalog-row" th:each="c : ${categorias}">
-                    <td colspan="4">
+                    <td th:colspan="${puedeEditar or puedeEliminar} ? 4 : 3">
                         <details class="catalog-row-details">
                             <summary class="catalog-row-summary category-row-summary">
                                 <span th:text="${c.id}"></span>
                                 <strong th:text="${c.nombre}">Categoría</strong>
                                 <span class="category-description" th:text="${c.descripcion != null and !c.descripcion.isBlank() ? c.descripcion : 'Sin descripción'}"></span>
-                                <span class="catalog-row-hint">Ver acciones</span>
+                                <span class="catalog-row-hint" th:if="${puedeEditar or puedeEliminar}">Ver acciones</span>
                             </summary>
-                            <div class="catalog-row-expanded">
-                                <details class="catalog-inline-edit">
+                            <div class="catalog-row-expanded" th:if="${puedeEditar or puedeEliminar}">
+                                <details class="catalog-inline-edit" th:if="${puedeEditar}">
                                     <summary class="btn btn-secondary">Editar categoría</summary>
                                     <form th:action="@{/catalogos/categorias/actualizar}" method="post" class="catalog-edit-form">
                                         <input type="hidden" name="id" th:value="${c.id}">
@@ -64,7 +62,7 @@
                                         <button class="btn btn-primary" type="submit">Guardar cambios</button>
                                     </form>
                                 </details>
-                                <form th:action="@{/catalogos/categorias/eliminar}" method="post">
+                                <form th:if="${puedeEliminar}" th:action="@{/catalogos/categorias/eliminar}" method="post">
                                     <input type="hidden" name="id" th:value="${c.id}">
                                     <button class="btn btn-danger" type="submit">Eliminar categoría</button>
                                 </form>

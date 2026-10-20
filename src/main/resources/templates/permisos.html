@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permisos por rol - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('permissions')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Permisos por rol</h1>
+            <small>Acceso por módulo, vista y acción</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+
+    <section class="panel">
+        <h2>Matriz jerárquica de acceso</h2>
+        <p class="muted-copy">Marca las acciones permitidas en cada vista. Los permisos de varios roles asignados a un usuario se combinan.</p>
+        <form th:action="@{/roles/permisos}" method="get" class="form-grid permission-role-picker">
+            <div class="field">
+                <label for="rolId">Rol a configurar</label>
+                <select id="rolId" name="rolId" required>
+                    <option th:each="rol : ${roles}" th:value="${rol.id}" th:selected="${rolSeleccionado != null and rol.id == rolSeleccionado.id}" th:text="${rol.nombre}"></option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" type="submit">Consultar permisos</button>
+        </form>
+    </section>
+
+    <section class="panel margin-top" th:if="${rolSeleccionado != null}">
+        <div class="section-heading-row">
+            <div>
+                <h2 th:text="${'Permisos del rol ' + rolSeleccionado.nombre}">Permisos del rol</h2>
+                <p class="muted-copy" th:if="${#strings.equalsIgnoreCase(rolSeleccionado.nombre, 'ADMIN')}">El rol ADMIN conserva acceso total para evitar el bloqueo del sistema.</p>
+                <p class="muted-copy" th:unless="${#strings.equalsIgnoreCase(rolSeleccionado.nombre, 'ADMIN')}">Sin acciones seleccionadas, el rol no tendrá acceso a las vistas.</p>
+            </div>
+        </div>
+        <form th:action="@{/roles/permisos/guardar}" method="post">
+            <input type="hidden" name="rolId" th:value="${rolSeleccionado.id}">
+            <div class="permission-module" th:each="modulo : ${modulos}">
+                <h3 th:text="${modulo.nombre}">Módulo</h3>
+                <div class="permission-view" th:each="vista : ${vistas}" th:if="${vista.modulo.id == modulo.id}">
+                    <strong th:text="${vista.nombre}">Vista</strong>
+                    <span class="muted-copy" th:text="${vista.descripcion}"></span>
+                    <div class="permission-actions">
+                        <label class="role-checkbox-option" th:each="permiso : ${permisos}">
+                            <input type="checkbox" name="claves"
+                                   th:value="${modulo.id + ':' + vista.id + ':' + permiso.id}"
+                                   th:checked="${clavesAsignadas.contains(modulo.id + ':' + vista.id + ':' + permiso.id)}"
+                                   th:disabled="${#strings.equalsIgnoreCase(rolSeleccionado.nombre, 'ADMIN')}">
+                            <span class="role-checkbox-check" aria-hidden="true"></span>
+                            <span class="role-checkbox-name" th:text="${permiso.nombre}">CONSULTAR</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit"
+                    th:disabled="${#strings.equalsIgnoreCase(rolSeleccionado.nombre, 'ADMIN')}">Guardar permisos</button>
+        </form>
+    </section>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

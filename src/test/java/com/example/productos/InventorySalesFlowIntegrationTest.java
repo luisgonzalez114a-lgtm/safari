@@ -133,6 +133,11 @@ class InventorySalesFlowIntegrationTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(productName)))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("sale-lines")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("sale-product-search")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir a la venta")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("name=\"observaciones\""))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("15.00")));
         mockMvc.perform(get("/api/salidas").session(adminSession))
                 .andExpect(status().isOk())
@@ -174,6 +179,44 @@ class InventorySalesFlowIntegrationTest {
                 .andExpect(redirectedUrl("/login"));
     }
 
+    @Test
+    void groupedSaleStoresAllItemsUpdatesStockAndShowsPrintableReceipt() throws Exception {
+        MockHttpSession adminSession = adminSession();
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Producto first = crearProducto("GROUP-A-" + suffix, "Grupo producto A " + suffix,
+                new BigDecimal("7.50"), 8);
+        Producto second = crearProducto("GROUP-B-" + suffix, "Grupo producto B " + suffix,
+                new BigDecimal("2.25"), 10);
+
+        MvcResult response = mockMvc.perform(post("/salidas/guardar")
+                        .session(adminSession)
+                        .param("productoIds", first.getId().toString(), second.getId().toString())
+                        .param("cantidades", "2", "3")
+                        .param("observaciones", "Venta en grupo"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("mensaje",
+                        "Venta registrada; las existencias se actualizaron."))
+                .andReturn();
+
+        com.example.productos.model.Salida venta = salidaRepository.findAll().stream()
+                .filter(sale -> "Venta en grupo".equals(sale.getObservaciones()))
+                .findFirst().orElseThrow();
+        assertEquals(0, venta.getMontoTotal().compareTo(new BigDecimal("21.75")));
+        assertEquals(6, productoRepository.findById(first.getId()).orElseThrow().getStockActual());
+        assertEquals(7, productoRepository.findById(second.getId()).orElseThrow().getStockActual());
+        assertEquals(2, detalleSalidaRepository.findAllBySalida_IdOrderByIdAsc(venta.getId()).size());
+        assertEquals("/salidas/" + venta.getId() + "/comprobante",
+                response.getResponse().getRedirectedUrl());
+
+        mockMvc.perform(get("/salidas/{id}/comprobante", venta.getId()).session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("COMPROBANTE DE VENTA")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(first.getNombre())))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(second.getNombre())))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("$21.75")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("No es una factura fiscal")));
+    }
+
     private MockHttpSession adminSession() {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("usuarioLogueado",
@@ -185,5 +228,16 @@ class InventorySalesFlowIntegrationTest {
         return "{\"codigo\":\"" + code + "\",\"nombre\":\"" + name
                 + "\",\"descripcion\":\"Prueba SAFARI\",\"precioCompra\":1.00,\"precioActual\":"
                 + price + ",\"stockActual\":" + stock + ",\"stockMinimo\":0}";
+    }
+
+    private Producto crearProducto(String codigo, String nombre, BigDecimal precio, int stock) {
+        Producto producto = new Producto();
+        producto.setCodigo(codigo);
+        producto.setNombre(nombre);
+        producto.setPrecioCompra(BigDecimal.ONE);
+        producto.setPrecioActual(precio);
+        producto.setStockActual(stock);
+        producto.setStockMinimo(0);
+        return productoRepository.saveAndFlush(producto);
     }
 }

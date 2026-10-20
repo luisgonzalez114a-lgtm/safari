@@ -2,6 +2,8 @@ package com.example.productos;
 
 import com.example.productos.model.Usuario;
 import com.example.productos.model.Rol;
+import com.example.productos.model.AuditoriaLog;
+import com.example.productos.repository.AuditoriaLogRepository;
 import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +18,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -43,6 +47,9 @@ class AdminUsersAndRolesIntegrationTest {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private AuditoriaLogRepository auditoriaLogRepository;
 
     @Autowired
     private RolRepository rolRepository;
@@ -177,7 +184,7 @@ class AdminUsersAndRolesIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Crear rol")))
                 .andExpect(content().string(containsString("permission-reference")))
-                .andExpect(content().string(containsString("Gestionar usuarios, roles y catálogos")))
+                .andExpect(content().string(containsString("Permisos iniciales para consultar inventario y registrar entradas y ventas.")))
                 .andExpect(content().string(containsString("VENDEDOR")))
                 .andExpect(content().string(containsString("sidebar-group")));
 
@@ -293,6 +300,12 @@ class AdminUsersAndRolesIntegrationTest {
         mockMvc.perform(delete("/api/roles/{id}", roleId).session(adminSession))
                 .andExpect(status().isNoContent());
         assertFalse(rolRepository.existsById(roleId));
+        Set<String> auditActions = auditoriaLogRepository.findAll().stream()
+                .map(AuditoriaLog::getAccion)
+                .collect(Collectors.toSet());
+        assertTrue(auditActions.containsAll(Set.of(
+                "CREAR_ROL", "EDITAR_ROL", "ELIMINAR_ROL",
+                "CREAR_USUARIO", "EDITAR_USUARIO", "ELIMINAR_USUARIO")));
     }
 
     @Test

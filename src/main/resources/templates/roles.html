@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roles - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
 </head>
 <body>
 <div class="app-shell">
@@ -24,6 +24,7 @@
                 <h2>Roles y permisos</h2>
                 <p class="muted-copy">Cada usuario puede tener varios roles; sus permisos se combinan.</p>
             </div>
+            <a class="btn btn-secondary" th:href="@{/roles/permisos}">Configurar permisos</a>
             <details class="add-disclosure">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Crear rol</summary>
                 <div class="disclosure-content">
@@ -37,18 +38,18 @@
                 </div>
             </details>
         </div>
-        <div class="permission-reference" aria-label="Permisos fijos de los roles del sistema">
+        <div class="permission-reference" aria-label="Permisos iniciales de los roles del sistema">
             <article class="permission-card">
                 <strong>ADMIN</strong>
-                <span>Gestionar usuarios, roles y catálogos; administrar productos; registrar entradas y ventas; consultar el inventario.</span>
+                <span>Acceso completo y protegido en todos los módulos, vistas y acciones.</span>
             </article>
             <article class="permission-card">
                 <strong>VENDEDOR</strong>
-                <span>Registrar entradas y ventas, consultar productos y existencias. No puede administrar usuarios, roles ni catálogos.</span>
+                <span>Permisos iniciales para consultar inventario y registrar entradas y ventas.</span>
             </article>
             <article class="permission-card">
                 <strong>USER</strong>
-                <span>Consultar el catálogo público. No puede gestionar el inventario ni registrar movimientos.</span>
+                <span>Permiso inicial para consultar el inventario sin modificarlo.</span>
             </article>
         </div>
     </section>
@@ -62,7 +63,7 @@
                     <th>ID</th>
                     <th>Rol</th>
                     <th>Usuarios asignados</th>
-                    <th>Permisos del sistema</th>
+                    <th>Matriz de permisos</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -78,14 +79,7 @@
                         <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'USER')}">Consulta del catálogo</span>
                     </td>
                     <td th:text="${r.usuarios.size()}"></td>
-                    <td>
-                        <span class="muted-copy" th:if="${!#strings.equalsIgnoreCase(r.nombre, 'ADMIN') and !#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR') and !#strings.equalsIgnoreCase(r.nombre, 'USER')}">
-                            Sin permisos especiales definidos
-                        </span>
-                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'ADMIN')}">Usuarios, roles, catálogos, productos y operaciones</span>
-                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'VENDEDOR')}">Entradas, ventas y consulta de productos</span>
-                        <span class="role-description" th:if="${#strings.equalsIgnoreCase(r.nombre, 'USER')}">Consulta del catálogo</span>
-                    </td>
+                    <td><a class="btn btn-secondary" th:href="@{/roles/permisos(rolId=${r.id})}">Ver / configurar</a></td>
                 </tr>
                 </tbody>
             </table>

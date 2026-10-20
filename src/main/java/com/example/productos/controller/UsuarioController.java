@@ -4,8 +4,11 @@ import com.example.productos.model.Usuario;
 import com.example.productos.model.Rol;
 import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
+import com.example.productos.service.AuditService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -18,13 +21,16 @@ public class UsuarioController {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     public UsuarioController(UsuarioRepository usuarioRepository,
                              RolRepository rolRepository,
-                             PasswordEncoder passwordEncoder) {
+                             PasswordEncoder passwordEncoder,
+                             AuditService auditService) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -33,7 +39,8 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> crear(@RequestBody Usuario usuario) {
+    @Transactional
+    public ResponseEntity<Usuario> crear(@RequestBody Usuario usuario, HttpSession session) {
         if (usuario.getClave() == null || usuario.getClave().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
@@ -43,11 +50,15 @@ public class UsuarioController {
         }
         usuario.setClave(passwordEncoder.encode(usuario.getClave()));
         usuario.setRoles(roles);
-        return ResponseEntity.ok(usuarioRepository.save(usuario));
+        Usuario creado = usuarioRepository.save(usuario);
+        auditService.registrarDesdeSesion(session, "CREAR_USUARIO", "usuarios", creado.getId());
+        return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizar(@PathVariable Integer id, @RequestBody Usuario usuario) {
+    @Transactional
+    public ResponseEntity<Usuario> actualizar(@PathVariable Integer id, @RequestBody Usuario usuario,
+                                              HttpSession session) {
         Set<Rol> roles = buscarRoles(usuario.getRoles());
         if (roles == null || roles.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -62,7 +73,9 @@ public class UsuarioController {
                     }
                     actual.setRoles(roles);
                     actual.setEstatus(usuario.getEstatus());
-                    return ResponseEntity.ok(usuarioRepository.save(actual));
+                    Usuario actualizado = usuarioRepository.save(actual);
+                    auditService.registrarDesdeSesion(session, "EDITAR_USUARIO", "usuarios", actualizado.getId());
+                    return ResponseEntity.ok(actualizado);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -80,11 +93,13 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+    @Transactional
+    public ResponseEntity<Void> eliminar(@PathVariable Integer id, HttpSession session) {
         if (!usuarioRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         usuarioRepository.deleteById(id);
+        auditService.registrarDesdeSesion(session, "ELIMINAR_USUARIO", "usuarios", id);
         return ResponseEntity.noContent().build();
     }
 }

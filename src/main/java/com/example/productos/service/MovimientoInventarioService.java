@@ -18,6 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class MovimientoInventarioService {
@@ -28,6 +32,7 @@ public class MovimientoInventarioService {
     private final DetalleSalidaRepository detalleSalidaRepository;
     private final ProveedorRepository proveedorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditService auditService;
 
     public MovimientoInventarioService(ProductoRepository productoRepository,
                                        EntradaRepository entradaRepository,
@@ -35,7 +40,8 @@ public class MovimientoInventarioService {
                                        SalidaRepository salidaRepository,
                                        DetalleSalidaRepository detalleSalidaRepository,
                                        ProveedorRepository proveedorRepository,
-                                       UsuarioRepository usuarioRepository) {
+                                       UsuarioRepository usuarioRepository,
+                                       AuditService auditService) {
         this.productoRepository = productoRepository;
         this.entradaRepository = entradaRepository;
         this.detalleEntradaRepository = detalleEntradaRepository;
@@ -43,6 +49,7 @@ public class MovimientoInventarioService {
         this.detalleSalidaRepository = detalleSalidaRepository;
         this.proveedorRepository = proveedorRepository;
         this.usuarioRepository = usuarioRepository;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -73,40 +80,87 @@ public class MovimientoInventarioService {
         producto.setStockActual((producto.getStockActual() == null ? 0 : producto.getStockActual()) + cantidad);
         producto.setPrecioCompra(precioCompra);
         productoRepository.save(producto);
+        auditService.registrar(usuario.getId(), "REGISTRAR_ENTRADA", "entradas", entrada.getId());
     }
 
     @Transactional
-    public void registrarSalida(Integer productoId, int cantidad, String observaciones, Integer usuarioId) {
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad debe ser mayor que cero.");
-        }
+    public Salida registrarSalida(Integer productoId, int cantidad, String observaciones, Integer usuarioId) {
+        return registrarSalida(List.of(new LineaVenta(productoId, cantidad)), observaciones, usuarioId);
+    }
+
+    @Transactional
+    public Salida registrarSalida(List<LineaVenta> lineas, String observaciones, Integer usuarioId) {
+        Map<Integer, Integer> cantidadesPorProducto = consolidarLineas(lineas);
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario de la sesión."));
-        Producto producto = productoRepository.findByIdForUpdate(productoId)
-                .orElseThrow(() -> new IllegalArgumentException("Selecciona un producto válido."));
-        int stockActual = producto.getStockActual() == null ? 0 : producto.getStockActual();
-        if (stockActual < cantidad) {
-            throw new IllegalArgumentException("No hay existencias suficientes para completar la venta.");
+
+        Map<Integer, Producto> productos = new LinkedHashMap<>();
+        for (Integer productoId : cantidadesPorProducto.keySet().stream().sorted().toList()) {
+            Producto producto = productoRepository.findByIdForUpdate(productoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Uno de los productos seleccionados ya no existe."));
+            int stockActual = producto.getStockActual() == null ? 0 : producto.getStockActual();
+            if (stockActual < cantidadesPorProducto.get(productoId)) {
+                throw new IllegalArgumentException("No hay existencias suficientes para completar la venta.");
+            }
+            if (producto.getPrecioActual() == null || producto.getPrecioActual().signum() < 0) {
+                throw new IllegalArgumentException("Uno de los productos tiene un precio de venta inválido.");
+            }
+            productos.put(productoId, producto);
         }
 
-        BigDecimal precioVenta = producto.getPrecioActual();
-        BigDecimal total = precioVenta.multiply(BigDecimal.valueOf(cantidad));
+        BigDecimal total = BigDecimal.ZERO;
+        List<DetalleSalida> detalles = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> linea : cantidadesPorProducto.entrySet()) {
+            Producto producto = productos.get(linea.getKey());
+            int cantidad = linea.getValue();
+            BigDecimal precioVenta = producto.getPrecioActual();
+            total = total.add(precioVenta.multiply(BigDecimal.valueOf(cantidad)));
+
+            DetalleSalida detalle = new DetalleSalida();
+            detalle.setProducto(producto);
+            detalle.setCantidad(cantidad);
+            detalle.setPrecioVenta(precioVenta);
+            detalles.add(detalle);
+        }
+
         Salida salida = new Salida();
         salida.setUsuario(usuario);
         salida.setFechaSalida(LocalDateTime.now());
-        salida.setMontoTotal(total);
+        salida.setMontoTotal(total.setScale(2, java.math.RoundingMode.HALF_UP));
         salida.setObservaciones(limpiar(observaciones));
         salida = salidaRepository.save(salida);
 
-        DetalleSalida detalle = new DetalleSalida();
-        detalle.setSalida(salida);
-        detalle.setProducto(producto);
-        detalle.setCantidad(cantidad);
-        detalle.setPrecioVenta(precioVenta);
-        detalleSalidaRepository.save(detalle);
+        for (DetalleSalida detalle : detalles) {
+            Producto producto = detalle.getProducto();
+            int stockActual = producto.getStockActual() == null ? 0 : producto.getStockActual();
+            producto.setStockActual(stockActual - detalle.getCantidad());
+            productoRepository.save(producto);
+            detalle.setSalida(salida);
+            detalleSalidaRepository.save(detalle);
+        }
+        auditService.registrar(usuario.getId(), "REGISTRAR_VENTA", "salidas", salida.getId());
+        return salida;
+    }
 
-        producto.setStockActual(stockActual - cantidad);
-        productoRepository.save(producto);
+    private Map<Integer, Integer> consolidarLineas(List<LineaVenta> lineas) {
+        if (lineas == null || lineas.isEmpty()) {
+            throw new IllegalArgumentException("Agrega al menos un producto a la venta.");
+        }
+        Map<Integer, Integer> cantidadesPorProducto = new LinkedHashMap<>();
+        for (LineaVenta linea : lineas) {
+            if (linea == null || linea.productoId() == null || linea.productoId() <= 0) {
+                throw new IllegalArgumentException("Selecciona un producto válido en cada línea.");
+            }
+            if (linea.cantidad() <= 0) {
+                throw new IllegalArgumentException("La cantidad de cada producto debe ser mayor que cero.");
+            }
+            try {
+                cantidadesPorProducto.merge(linea.productoId(), linea.cantidad(), Math::addExact);
+            } catch (ArithmeticException exception) {
+                throw new IllegalArgumentException("La cantidad total de un producto es demasiado grande.", exception);
+            }
+        }
+        return cantidadesPorProducto;
     }
 
     private void validarCantidadYPrecio(int cantidad, BigDecimal precio) {
@@ -121,4 +175,6 @@ public class MovimientoInventarioService {
     private String limpiar(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
+
+    public record LineaVenta(Integer productoId, Integer cantidad) {}
 }

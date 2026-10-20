@@ -16,11 +16,12 @@ controlar el acceso según el rol del usuario.
 4. **Se construyeron las pantallas:** Thymeleaf genera las páginas, CSS define
    su presentación y un script JavaScript pequeño controla el indicador de
    carga y la transición al cerrar sesión. Tabler se usa como base visual local.
-5. **Se agregaron controles de acceso y movimientos seguros:** los permisos se
-   validan en el servidor y las entradas/ventas actualizan el movimiento y el
-   stock dentro de transacciones.
+5. **Se agregaron controles de acceso y movimientos seguros:** los permisos por
+   rol, módulo, vista y acción se validan en el servidor; las entradas/ventas
+   actualizan el movimiento, el stock y la auditoría dentro de transacciones.
 6. **Se verificaron las funciones:** las pruebas automatizadas usan H2 en
-   memoria y comprueban pantallas, permisos, catálogos y movimientos.
+   memoria y comprueban pantallas, asignación/revocación de permisos,
+   denegaciones, catálogos y movimientos.
 
 ### Herramientas y motivo de uso
 
@@ -37,9 +38,10 @@ controlar el acceso según el rol del usuario.
 
 ## 2. Diagrama entidad-relación
 
-El modelo tiene 11 tablas. Las tablas `detalles_entradas` y `detalles_salidas`
-resuelven la relación entre movimientos y productos; `usuario_roles` permite
-asignar varios roles a cada usuario.
+El esquema completo tiene 17 tablas. Las tablas `detalles_entradas` y
+`detalles_salidas` relacionan movimientos y productos; `usuario_roles` permite
+asignar varios roles a cada usuario. El grupo RBAC y la auditoría añaden seis
+tablas al modelo original.
 
 ```mermaid
 erDiagram
@@ -54,11 +56,38 @@ erDiagram
     PRODUCTOS ||--o{ DETALLES_SALIDAS : vendido
     MARCAS o|--o{ PRODUCTOS : clasifica
     CATEGORIAS o|--o{ PRODUCTOS : clasifica
+    MODULOS ||--o{ VISTAS : organiza
+    MODULOS ||--o{ R_MODULO_ROL : asignado
+    ROLES ||--o{ R_MODULO_ROL : recibe
+    R_MODULO_ROL ||--o{ VISTAS_PERMISO : concede
+    VISTAS ||--o{ VISTAS_PERMISO : autoriza
+    PERMISOS ||--o{ VISTAS_PERMISO : define
+    USUARIOS o|--o{ AUDITORIA_LOGS : realiza
 ```
 
 **Cómo leerlo:** `||` representa uno; `o{` representa cero o muchos. Por
 ejemplo, una entrada pertenece a un proveedor y puede tener varias líneas de
 detalle. Cada línea guarda el producto, cantidad y costo de compra.
+
+### Normalización del esquema
+
+- **Primera forma normal (1FN):** cada columna guarda un valor por fila. Los
+  productos de una entrada o venta se guardan en filas independientes de
+  `detalles_entradas` y `detalles_salidas`, no como listas dentro del
+  encabezado.
+- **Segunda forma normal (2FN):** las tablas de asociación `usuario_roles`,
+  `r_modulo_rol` y `vistas_permiso` identifican las relaciones mediante claves
+  únicas; sus atributos dependen de la relación completa. Los datos de producto,
+  rol, módulo, vista y permiso permanecen en sus tablas propias.
+- **Tercera forma normal (3FN):** los nombres de categorías, marcas, roles y
+  proveedores no se repiten como atributos de cada producto o movimiento; las
+  claves foráneas mantienen esas relaciones y reducen dependencias transitivas.
+
+`productos.stock_actual` y `salidas.monto_total` son valores agregados que el
+sistema mantiene para consultar rápidamente. No se presentan como datos
+normalizados independientes: los movimientos y su detalle son la evidencia
+operativa, y el servicio mantiene el stock, el total y su auditoría dentro de
+una transacción.
 
 ## 3. Diagrama de uso
 
@@ -76,26 +105,35 @@ flowchart LR
     admin --> inventario(["Administrar productos"])
     admin --> catalogos(["Administrar proveedores, marcas y categorías"])
     admin --> cuentas(["Administrar usuarios y roles"])
+    admin --> permisos(["Asignar permisos por módulo y vista"])
+    admin --> auditoria(["Consultar auditoría"])
+    personal["Personal autenticado"] --> dashboard(["Consultar indicadores operativos"])
 ```
 
 La aplicación permite consultar el catálogo públicamente. El administrador
-gestiona la información y los usuarios; el vendedor opera las entradas y
-ventas. Las rutas también se validan en el servidor, no solo se ocultan botones.
+gestiona la información, las cuentas y los permisos; el vendedor opera las
+entradas y ventas. El personal autenticado ve indicadores operativos. Las rutas
+se validan en el servidor, no solo se ocultan botones.
 
 ## 4. Diagrama general de la aplicación
 
 ```mermaid
 flowchart LR
     navegador["Navegador<br/>Thymeleaf, CSS y JavaScript"] --> controladores["Controladores Spring MVC"]
-    controladores --> acceso["RoleAccessInterceptor<br/>valida sesión y rol"]
+    controladores --> acceso["RoleAccessInterceptor<br/>consulta permisos RBAC"]
     acceso --> servicios["Servicios<br/>reglas y transacciones"]
     servicios --> repositorios["Repositorios Spring Data JPA"]
     repositorios --> mysql[("MySQL")]
+    servicios --> auditoria["AuditService"]
+    auditoria --> mysql
+    servicios --> indicadores["DashboardService"]
+    indicadores --> repositorios
 ```
 
 Los controladores reciben las acciones de las pantallas. El interceptor protege
-las rutas según la sesión y el rol; los servicios aplican las reglas del
-negocio y los repositorios persisten la información.
+las rutas según los permisos asociados al rol; los servicios aplican las reglas
+del negocio, guardan eventos de auditoría y calculan indicadores para la página
+principal.
 
 ## 5. Diagrama físico-relacional (ERAF)
 
@@ -114,6 +152,9 @@ Tablas principales:
 | `entradas`, `detalles_entradas` | Encabezado de recepción y sus productos/cantidades/costos. |
 | `salidas`, `detalles_salidas` | Encabezado de venta y sus productos/cantidades/precios. |
 | `usuarios`, `roles`, `usuario_roles` | Cuentas, roles y asignaciones de roles. |
+| `modulos`, `vistas`, `permisos` | Catálogo de módulos, pantallas y acciones del RBAC. |
+| `r_modulo_rol`, `vistas_permiso` | Asignaciones de módulos y acciones a cada rol. |
+| `auditoria_logs` | Acciones importantes, fecha/hora y usuario cuando está autenticado. |
 
 ## 6. Diagrama del inicio de sesión
 
@@ -125,8 +166,8 @@ flowchart TD
     activa -- No --> error["Mostrar error y volver al login"]
     activa -- Sí --> sesion["Guardar usuario en la sesión"]
     sesion --> inicioApp["Redirigir al inventario"]
-    inicioApp --> rol["El servidor valida el rol en cada ruta protegida"]
-    rol --> salir["Cerrar sesión"]
+    inicioApp --> permisos["El servidor valida el permiso del rol en cada ruta protegida"]
+    permisos --> salir["Cerrar sesión"]
     salir --> invalidar["Invalidar sesión y volver al login"]
 ```
 
@@ -145,13 +186,25 @@ que la cuenta esté activa; el cierre de sesión invalida la sesión del servido
    editar productos y luego consultar el listado.
 5. **Registrar una entrada (ADMIN/VENDEDOR):** elegir proveedor, producto,
    cantidad y costo. Al guardar, SAFARI incrementa el stock.
-6. **Registrar una venta (ADMIN/VENDEDOR):** elegir producto y cantidad. El
-   sistema calcula el total con el precio actual, valida las existencias y
-   descuenta el stock.
+6. **Registrar una venta (ADMIN/VENDEDOR):** buscar un producto por nombre o
+   código, elegirlo, indicar la cantidad y presionar Enter para añadirlo a la
+   lista. Repetir con cada producto necesario. SAFARI muestra los subtotales y
+   el total usando el precio actual,
+   valida el stock de todos los productos y confirma todo como una sola venta.
+   Al confirmar, abre un comprobante interno con número, fecha, detalle, precios
+   y total que se puede imprimir desde el navegador. No es una factura fiscal.
 7. **Administrar usuarios y roles (ADMIN):** crear cuentas, activar o
    desactivar usuarios y asignar roles. Si se cambia una contraseña, se pide
    confirmar la contraseña actual.
-8. **Cerrar sesión:** seleccionar “Cerrar sesión”. Se muestra el indicador
+8. **Configurar permisos (ADMIN):** abrir **Roles → Configurar permisos**,
+   seleccionar un rol y marcar qué acciones puede realizar en cada vista.
+   `ADMIN` conserva sus permisos completos protegidos.
+9. **Revisar auditoría (ADMIN):** abrir **Usuarios y roles → Auditoría** para
+   consultar los eventos recientes. Los intentos fallidos no guardan el correo
+   ni la contraseña ingresados.
+10. **Ver indicadores:** el tablero muestra el estado del stock y compara
+    entradas y ventas del mes; las cifras operativas requieren iniciar sesión.
+11. **Cerrar sesión:** seleccionar “Cerrar sesión”. Se muestra el indicador
    “Cerrando sesión…” y luego aparece la pantalla de acceso.
 
 ### Cuentas de demostración
@@ -195,15 +248,20 @@ ejecutar las pruebas automatizadas (usan H2 en memoria y no necesitan XAMPP):
 
 ## 9. Alcance frente a la guía académica
 
-SAFARI tiene roles `ADMIN`, `VENDEDOR` y `USER`, una relación muchos a muchos
-entre usuarios y roles, validación de rutas en el backend y transacciones para
-registrar movimientos y actualizar stock. Las consultas de Spring Data JPA
-usan parámetros, en vez de concatenar los datos ingresados.
+SAFARI implementa un RBAC jerárquico con módulos, vistas, permisos de
+`CONSULTAR`/`CREAR`/`EDITAR`/`ELIMINAR` y una matriz configurable por rol. También
+incluye un registro de auditoría para autenticaciones, accesos denegados,
+movimientos, cambios de permisos y operaciones CRUD; y un tablero con
+indicadores numéricos y barras gráficas de stock y actividad mensual.
 
-**No se debe afirmar que SAFARI implementa todo el RBAC jerárquico solicitado
-en el PDF:** actualmente no hay tablas de módulos, vistas, permisos granulares
-ni auditoría. Tampoco hay un dashboard analítico con indicadores gráficos; la
-pantalla principal presenta el inventario y datos resumidos. La guía académica
-también pide demostrar formalmente la normalización y pruebas específicas de
-auditoría y reversión; el instructivo describe lo que el proyecto tiene, no
-declara cumplidas esas partes que aún no están implementadas o documentadas.
+La consistencia de movimientos se prueba con H2: una venta que excede el stock
+se rechaza; una prueba adicional fuerza un fallo de auditoría después de guardar
+el encabezado y detalle de una venta y comprueba que la transacción revierte
+ambos registros y el cambio de stock. La sección de normalización explica las
+formas normales y señala los valores agregados que SAFARI mantiene por razones
+operativas.
+
+La comprobación aquí descrita corresponde a las tablas, rutas y pruebas de este
+repositorio. La migración sobre una base MySQL existente no se ejecutó en una
+instalación real durante esta entrega; debe respaldarse la base antes de
+aplicarla.

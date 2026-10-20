@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.1}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.4}">
 </head>
 <body>
 <div class="app-shell">
@@ -13,7 +13,7 @@
     <header class="topbar">
         <div class="brand">
             <h1>Ventas y salidas</h1>
-            <small>Venta de mostrador · sin registro de cliente</small>
+            <small>Venta de mostrador · varios productos por venta</small>
         </div>
         <div th:replace="~{fragments/navigation :: userMenu}"></div>
     </header>
@@ -32,48 +32,73 @@
             <details class="add-disclosure wide-add-disclosure">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Registrar venta</summary>
                 <div class="disclosure-content">
-                    <p class="muted-copy">El precio se toma del precio actual del producto.</p>
-                    <form th:action="@{/salidas/guardar}" method="post" class="form-grid">
-                        <div class="field">
-                            <label for="productoId">Producto</label>
-                            <select id="productoId" name="productoId" required>
-                                <option value="">Selecciona producto con existencias</option>
-                                <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
-                                        th:value="${p.id}"
-                                        th:text="${p.codigo + ' · ' + p.nombre + ' — disponible: ' + p.stockActual + ' — $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
-                            </select>
+                    <p class="muted-copy">Busca cada producto, indica la cantidad y presiona Enter para añadirlo a la venta.</p>
+                    <form th:action="@{/salidas/guardar}" method="post" class="form-grid sale-form">
+                        <div class="sale-picker">
+                            <div class="field sale-search-field">
+                                <label for="sale-product-search">Buscar producto</label>
+                                <input id="sale-product-search" type="search" list="sale-product-options"
+                                       autocomplete="off" placeholder="Escribe el nombre o código del producto">
+                                <datalist id="sale-product-options">
+                                    <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
+                                            th:value="${p.codigo + ' · ' + p.nombre}"
+                                            th:attr="data-product-id=${p.id},data-price=${p.precioActual},data-stock=${p.stockActual},data-code=${p.codigo},data-name=${p.nombre}"
+                                            th:label="${'Disponible: ' + p.stockActual + ' · $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
+                                </datalist>
+                            </div>
+                            <div class="field sale-quantity-field">
+                                <label for="sale-quantity">Cantidad</label>
+                                <input id="sale-quantity" type="number" min="1" value="1" inputmode="numeric">
+                            </div>
+                            <button id="add-sale-item" class="btn btn-secondary" type="button">Añadir a la venta</button>
                         </div>
-                        <div class="field">
-                            <label for="cantidad">Cantidad</label>
-                            <input id="cantidad" type="number" name="cantidad" min="1" value="1" required>
+                        <p id="sale-picker-error" class="sale-picker-error" role="alert" hidden></p>
+                        <div class="sale-cart-wrap">
+                            <table class="sale-cart">
+                                <thead>
+                                <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th></th></tr>
+                                </thead>
+                                <tbody id="sale-lines">
+                                <tr class="sale-cart-empty"><td colspan="5">Aún no has añadido productos.</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="field">
-                            <label for="observaciones">Observaciones</label>
-                            <input id="observaciones" type="text" name="observaciones" maxlength="1000">
+                        <div class="sale-form-actions">
+                            <strong class="sale-total-preview">Total de la venta: <span id="sale-total">$0.00</span></strong>
+                            <button class="btn btn-primary sale-confirm-button" type="submit"
+                                    th:disabled="${!hayProductosDisponibles}" disabled>
+                                Confirmar venta e imprimir comprobante
+                            </button>
                         </div>
-                        <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(productos)}">Cobrar y registrar salida</button>
+                        <p class="muted-copy" th:if="${!hayProductosDisponibles}">No hay productos con existencias disponibles para vender.</p>
                     </form>
                 </div>
             </details>
         </section>
 
         <section class="panel">
-            <h2>Historial de ventas</h2>
+            <h2>Historial de comprobantes</h2>
             <div class="table-wrap">
                 <table class="table table-vcenter data-table">
                     <thead>
-                    <tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Atendió</th></tr>
+                    <tr><th>N.º venta</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Atendió</th><th>Comprobante</th></tr>
                     </thead>
                     <tbody>
-                    <tr th:if="${#lists.isEmpty(detalles)}">
-                        <td class="empty-state" colspan="5">Todavía no hay ventas registradas.</td>
+                    <tr th:if="${#lists.isEmpty(ventas)}">
+                        <td class="empty-state" colspan="6">Todavía no hay ventas registradas.</td>
                     </tr>
-                    <tr th:each="d : ${detalles}">
-                        <td th:text="${d.salida.fechaSalida != null ? #temporals.format(d.salida.fechaSalida, 'dd/MM/yyyy HH:mm') : '—'}"></td>
-                        <td th:text="${d.producto.codigo + ' · ' + d.producto.nombre}"></td>
-                        <td th:text="${d.cantidad}"></td>
-                        <td class="price-cell" th:text="${#numbers.formatDecimal(d.salida.montoTotal, 1, 2)}"></td>
-                        <td th:text="${d.salida.usuario.nombre}"></td>
+                    <tr th:each="venta : ${ventas}">
+                        <td th:text="${'#' + venta.salida.id}"></td>
+                        <td th:text="${venta.salida.fechaSalida != null ? #temporals.format(venta.salida.fechaSalida, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                        <td>
+                            <span th:each="detalle, status : ${venta.detalles}">
+                                <span th:if="${status.index > 0}">, </span>
+                                <span th:text="${detalle.cantidad + ' × ' + detalle.producto.nombre}"></span>
+                            </span>
+                        </td>
+                        <td class="price-cell" th:text="${'$' + #numbers.formatDecimal(venta.salida.montoTotal, 1, 2)}"></td>
+                        <td th:text="${venta.salida.usuario.nombre}"></td>
+                        <td><a class="btn btn-secondary" th:href="@{/salidas/{id}/comprobante(id=${venta.salida.id})}">Ver / imprimir</a></td>
                     </tr>
                     </tbody>
                 </table>
@@ -82,5 +107,6 @@
     </div>
 </div>
 <th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+<script th:src="@{/js/sales-cart.js?v=1.0.0}" defer></script>
 </body>
 </html>

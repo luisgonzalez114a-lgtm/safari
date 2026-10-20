@@ -4,6 +4,9 @@ import com.example.productos.model.Producto;
 import com.example.productos.model.Usuario;
 import com.example.productos.repository.CategoriaRepository;
 import com.example.productos.repository.MarcaRepository;
+import com.example.productos.service.AuditService;
+import com.example.productos.service.DashboardService;
+import com.example.productos.service.RbacService;
 import com.example.productos.service.ProductoService;
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -20,13 +23,22 @@ public class ProductoWebController {
     private final ProductoService productoService;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
+    private final RbacService rbacService;
+    private final DashboardService dashboardService;
+    private final AuditService auditService;
 
     public ProductoWebController(ProductoService productoService,
                                  CategoriaRepository categoriaRepository,
-                                 MarcaRepository marcaRepository) {
+                                 MarcaRepository marcaRepository,
+                                 RbacService rbacService,
+                                 DashboardService dashboardService,
+                                 AuditService auditService) {
         this.productoService = productoService;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
+        this.rbacService = rbacService;
+        this.dashboardService = dashboardService;
+        this.auditService = auditService;
     }
 
     @GetMapping("/")
@@ -35,9 +47,18 @@ public class ProductoWebController {
         model.addAttribute("usuarioLogueado", usuario);
         model.addAttribute("esAdmin", esAdmin(usuario));
         model.addAttribute("esVendedor", esVendedor(usuario));
-        model.addAttribute("esCliente", !esAdmin(usuario) && !esVendedor(usuario));
+        model.addAttribute("esCliente", usuario == null);
+        model.addAttribute("dashboard", dashboardService.obtenerResumenDelMes());
+        model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
+        model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));
+        model.addAttribute("puedeEliminarProducto", puede(usuario, "/inventario", RbacService.ELIMINAR));
+        model.addAttribute("puedeGestionarProducto",
+                puede(usuario, "/inventario", RbacService.CREAR)
+                        || puede(usuario, "/inventario", RbacService.EDITAR)
+                        || puede(usuario, "/inventario", RbacService.ELIMINAR));
         model.addAttribute("productos", productoService.listar());
-        if (esAdmin(usuario)) {
+        if (puede(usuario, "/inventario", RbacService.CREAR)
+                || puede(usuario, "/inventario", RbacService.EDITAR)) {
             model.addAttribute("producto", new Producto());
             agregarCatalogos(model);
         }
@@ -46,10 +67,6 @@ public class ProductoWebController {
 
     @PostMapping("/productos/guardar")
     public String guardar(@ModelAttribute Producto producto, HttpSession session, RedirectAttributes redirectAttributes) {
-        if (!hayAccesoAdmin(session)) {
-            return "redirect:/";
-        }
-
         if (!datosProductoValidos(producto)) {
             redirectAttributes.addFlashAttribute("error", "Verifica el código, nombre, precios y cantidades del producto.");
             return "redirect:/";
@@ -59,24 +76,34 @@ public class ProductoWebController {
             return "redirect:/";
         }
 
+        Usuario actor = (Usuario) session.getAttribute("usuarioLogueado");
         if (producto.getId() == null) {
-            productoService.crear(producto);
+            Producto creado = productoService.crear(producto);
+            auditService.registrar(actor.getId(), "CREAR_PRODUCTO", "productos", creado.getId());
         } else {
-            productoService.actualizar(producto.getId(), producto);
+            Producto actualizado = productoService.actualizar(producto.getId(), producto);
+            if (actualizado != null) {
+                auditService.registrar(actor.getId(), "EDITAR_PRODUCTO", "productos", actualizado.getId());
+            }
         }
         return "redirect:/";
     }
 
     @GetMapping("/productos/editar/{id}")
     public String editar(@PathVariable Integer id, Model model, HttpSession session) {
-        if (!hayAccesoAdmin(session)) {
-            return "redirect:/";
-        }
-        model.addAttribute("usuarioLogueado", session.getAttribute("usuarioLogueado"));
-        model.addAttribute("esAdmin", true);
-        model.addAttribute("esVendedor", false);
+        Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
+        model.addAttribute("usuarioLogueado", usuario);
+        model.addAttribute("esAdmin", esAdmin(usuario));
+        model.addAttribute("esVendedor", esVendedor(usuario));
         model.addAttribute("esCliente", false);
-        model.addAttribute("producto", productoService.listar().stream().filter(p -> p.getId().equals(id)).findFirst().orElse(new Producto()));
+        model.addAttribute("dashboard", dashboardService.obtenerResumenDelMes());
+        model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
+        model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));
+        model.addAttribute("puedeEliminarProducto", puede(usuario, "/inventario", RbacService.ELIMINAR));
+        model.addAttribute("puedeGestionarProducto", true);
+        var producto = productoService.listar().stream().filter(p -> p.getId().equals(id))
+                .findFirst().orElse(new Producto());
+        model.addAttribute("producto", producto);
         model.addAttribute("productos", productoService.listar());
         agregarCatalogos(model);
         return "index";
@@ -89,20 +116,15 @@ public class ProductoWebController {
 
     @PostMapping("/productos/eliminar/{id}")
     public String eliminar(@PathVariable Integer id, HttpSession session, RedirectAttributes attributes) {
-        if (!hayAccesoAdmin(session)) {
-            return "redirect:/";
-        }
         try {
-            productoService.eliminar(id);
+            if (productoService.eliminar(id)) {
+                Usuario actor = (Usuario) session.getAttribute("usuarioLogueado");
+                auditService.registrar(actor.getId(), "ELIMINAR_PRODUCTO", "productos", id);
+            }
         } catch (org.springframework.dao.DataIntegrityViolationException exception) {
             attributes.addFlashAttribute("error", "No se puede eliminar: el producto tiene movimientos registrados.");
         }
         return "redirect:/";
-    }
-
-    private boolean hayAccesoAdmin(HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
-        return usuario != null && usuarioPuedeEditar(usuario);
     }
 
     private boolean esAdmin(Usuario usuario) {
@@ -140,5 +162,9 @@ public class ProductoWebController {
 
     private boolean esVendedor(Usuario usuario) {
         return usuario != null && usuario.tieneRol("VENDEDOR");
+    }
+
+    private boolean puede(Usuario usuario, String vista, String accion) {
+        return usuario != null && rbacService.usuarioTienePermiso(usuario.getId(), vista, accion);
     }
 }
