@@ -25,7 +25,7 @@ import java.util.Set;
 
 @Controller
 public class UsuarioWebController {
-    private static final int USUARIOS_POR_PAGINA = 9;
+    private static final int USUARIOS_POR_PAGINA = 5;
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
@@ -81,7 +81,7 @@ public class UsuarioWebController {
             attributes.addFlashAttribute("error", "Completa nombre, correo, contraseña y selecciona al menos un rol válido.");
             return "redirect:/usuarios";
         }
-        if (usuarioRepository.findByCorreo(correo.trim()).isPresent()) {
+        if (usuarioRepository.findByCorreoIgnoreCase(correo.trim()).isPresent()) {
             attributes.addFlashAttribute("error", "Ya existe un usuario con ese correo.");
             return "redirect:/usuarios";
         }
@@ -136,7 +136,8 @@ public class UsuarioWebController {
                     "Para cambiar la contraseña, confirma correctamente la contraseña actual del usuario.");
             return "redirect:/usuarios";
         }
-        if (usuarioRepository.findByCorreo(correo.trim()).filter(u -> !u.getId().equals(usuarioId)).isPresent()) {
+        if (usuarioRepository.findByCorreoIgnoreCase(correo.trim())
+                .filter(u -> !u.getId().equals(usuarioId)).isPresent()) {
             attributes.addFlashAttribute("error", "Ese correo ya está asignado a otro usuario.");
             return "redirect:/usuarios";
         }

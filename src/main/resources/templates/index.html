@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.4}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.12}">
 </head>
 <body>
 <div class="app-shell" th:classappend="${esCliente} ? ' public-shell' : ''">
@@ -36,15 +36,15 @@
             <span class="stat-label">Unidades disponibles</span>
             <span class="stat-value" th:text="${dashboard.unidadesEnStock}">0</span>
         </div>
-        <div class="stat-card" th:if="${usuarioLogueado != null}">
+        <div class="stat-card" th:if="${esPersonal}">
             <span class="stat-label">Productos en stock mínimo</span>
             <span class="stat-value" th:text="${dashboard.productosEnStockMinimo}">0</span>
         </div>
-        <div class="stat-card" th:if="${usuarioLogueado != null}">
+        <div class="stat-card" th:if="${esPersonal}">
             <span class="stat-label">Entradas este mes</span>
             <span class="stat-value" th:text="${dashboard.entradasDelMes}">0</span>
         </div>
-        <div class="stat-card" th:if="${usuarioLogueado != null}">
+        <div class="stat-card" th:if="${esPersonal}">
             <span class="stat-label">Ventas este mes</span>
             <span class="stat-value" th:text="${dashboard.ventasDelMes}">0</span>
         </div>
@@ -54,7 +54,7 @@
         </div>
     </section>
 
-    <section class="dashboard-analytics" th:if="${usuarioLogueado != null}" aria-label="Indicadores gráficos del inventario">
+    <section class="dashboard-analytics" th:if="${esPersonal}" aria-label="Indicadores gráficos del inventario">
         <article class="panel analytics-card">
             <h2>Estado del inventario</h2>
             <div class="analytics-item">
@@ -106,9 +106,9 @@
     <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
 
     <div class="layout wide-layout">
-        <aside class="panel" th:if="${puedeCrearProducto or puedeEditarProducto}">
+        <aside id="inventory-workspace" class="panel" th:if="${puedeCrearProducto or puedeEditarProducto}">
             <div class="section-heading-row">
-                <h2 th:text="${producto.id != null} ? 'Editar producto' : 'Inventario'">Inventario</h2>
+                <h2 id="inventory-title" th:text="${producto.id != null} ? 'Editar producto' : 'Inventario'">Inventario</h2>
             </div>
             <details class="add-disclosure wide-add-disclosure product-add-disclosure" th:open="${producto.id != null}">
                 <summary class="btn btn-primary">
@@ -116,7 +116,7 @@
                     <span th:text="${producto.id != null} ? 'Editar producto' : 'Añadir al inventario'">Añadir al inventario</span>
                 </summary>
                 <div class="disclosure-content">
-                    <form th:action="@{/productos/guardar}" th:object="${producto}" method="post" class="form-grid">
+                    <form th:action="@{/productos/guardar}" th:object="${producto}" method="post" class="form-grid" autocomplete="off">
                         <input type="hidden" th:field="*{id}" />
                         <div class="field">
                             <label>Código</label>

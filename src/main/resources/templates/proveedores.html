@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proveedores - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body>
 <div class="app-shell">
@@ -25,7 +25,7 @@
         <details class="add-disclosure catalog-add-disclosure" th:if="${puedeCrear}">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir proveedor</summary>
                 <div class="disclosure-content">
-                    <form th:action="@{/catalogos/proveedores}" method="post" class="form-grid">
+                    <form th:action="@{/catalogos/proveedores}" method="post" class="form-grid" autocomplete="off">
                         <div class="field"><label for="proveedorNombre">Nombre</label><input id="proveedorNombre" name="nombre" required maxlength="100"></div>
                         <div class="field"><label for="rifNit">RIF / NIT</label><input id="rifNit" name="rifNit" maxlength="50"></div>
                         <div class="field"><label for="proveedorTelefono">Teléfono</label><input id="proveedorTelefono" name="telefono" maxlength="20"></div>
@@ -69,7 +69,7 @@
                             <div class="supplier-expanded" th:if="${puedeEditar or puedeEliminar}">
                                 <details class="supplier-inline-edit" th:if="${puedeEditar}">
                                     <summary class="btn btn-secondary">Editar proveedor</summary>
-                                    <form th:action="@{/catalogos/proveedores/actualizar}" method="post" class="supplier-edit-form">
+                                    <form th:action="@{/catalogos/proveedores/actualizar}" method="post" class="supplier-edit-form" autocomplete="off">
                                         <input type="hidden" name="id" th:value="${p.id}">
                                         <div class="field"><label th:for="${'proveedorNombre-' + p.id}">Nombre</label><input th:id="${'proveedorNombre-' + p.id}" name="nombre" th:value="${p.nombre}" required maxlength="100"></div>
                                         <div class="field"><label th:for="${'proveedorRif-' + p.id}">RIF / NIT</label><input th:id="${'proveedorRif-' + p.id}" name="rifNit" th:value="${p.rifNit}" maxlength="50"></div>

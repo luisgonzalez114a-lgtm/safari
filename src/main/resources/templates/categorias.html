@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Categorías - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body>
 <div class="app-shell">
@@ -25,7 +25,7 @@
         <details class="add-disclosure catalog-add-disclosure" th:if="${puedeCrear}">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Añadir categoría</summary>
                 <div class="disclosure-content">
-                    <form th:action="@{/catalogos/categorias}" method="post" class="form-grid">
+                    <form th:action="@{/catalogos/categorias}" method="post" class="form-grid" autocomplete="off">
                         <div class="field"><label for="categoriaNombre">Nombre de la categoría</label><input id="categoriaNombre" name="nombre" required maxlength="50"></div>
                         <div class="field"><label for="categoriaDescripcion">Descripción</label><input id="categoriaDescripcion" name="descripcion"></div>
                         <button class="btn btn-primary" type="submit">Guardar categoría</button>
@@ -55,7 +55,7 @@
                             <div class="catalog-row-expanded" th:if="${puedeEditar or puedeEliminar}">
                                 <details class="catalog-inline-edit" th:if="${puedeEditar}">
                                     <summary class="btn btn-secondary">Editar categoría</summary>
-                                    <form th:action="@{/catalogos/categorias/actualizar}" method="post" class="catalog-edit-form">
+                                    <form th:action="@{/catalogos/categorias/actualizar}" method="post" class="catalog-edit-form" autocomplete="off">
                                         <input type="hidden" name="id" th:value="${c.id}">
                                         <div class="field"><label th:for="${'categoriaNombre-' + c.id}">Nombre de la categoría</label><input th:id="${'categoriaNombre-' + c.id}" name="nombre" th:value="${c.nombre}" required maxlength="50"></div>
                                         <div class="field"><label th:for="${'categoriaDescripcion-' + c.id}">Descripción</label><input th:id="${'categoriaDescripcion-' + c.id}" name="descripcion" th:value="${c.descripcion}"></div>

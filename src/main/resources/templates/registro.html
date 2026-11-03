@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta · SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+</head>
+<body class="login-page">
+<main class="login-card">
+    <div class="login-mark" aria-hidden="true">S</div>
+    <div class="login-header">
+        <span class="eyebrow">CUENTA DE CLIENTE</span>
+        <h2>Crear cuenta</h2>
+        <p>Regístrate para consultar el catálogo de SAFARI.</p>
+    </div>
+
+    <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+
+    <form th:action="@{/registro}" method="post" class="form-block">
+        <div class="field">
+            <label for="nombre">Nombre completo</label>
+            <input id="nombre" type="text" name="nombre" maxlength="100" autocomplete="name" required>
+        </div>
+        <div class="field">
+            <label for="correo">Correo electrónico</label>
+            <input id="correo" type="email" name="correo" maxlength="100" autocomplete="email" required>
+        </div>
+        <div class="field">
+            <label for="telefono">Teléfono (opcional)</label>
+            <input id="telefono" type="tel" name="telefono" maxlength="20" autocomplete="tel">
+        </div>
+        <div class="field">
+            <label for="clave">Contraseña</label>
+            <input id="clave" type="password" name="clave" minlength="8" maxlength="72"
+                   autocomplete="new-password" required>
+            <small>Usa al menos 8 caracteres.</small>
+        </div>
+        <button type="submit" class="login-button">Crear cuenta</button>
+    </form>
+
+    <a class="btn btn-secondary public-catalog-link" th:href="@{/login}">Ya tengo una cuenta</a>
+</main>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

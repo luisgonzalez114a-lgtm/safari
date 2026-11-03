@@ -9,7 +9,7 @@
              th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/inventario', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/entradas', 'CONSULTAR') or @rbacService.usuarioTienePermiso(usuarioLogueado.id, '/salidas', 'CONSULTAR')}"
              th:open="${activePage == 'inventory' or activePage == 'entries' or activePage == 'sales'}">
         <summary class="sidebar-group-summary">Inventario</summary>
-        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/inventario', 'CONSULTAR')}" th:href="@{/}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
+        <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/inventario', 'CONSULTAR')}" th:href="@{/#inventory-workspace}" th:classappend="${activePage == 'inventory'} ? ' active' : ''">Inventario</a>
         <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/entradas', 'CONSULTAR')}"
            th:href="@{/entradas}" th:classappend="${activePage == 'entries'} ? ' active' : ''">Entradas</a>
         <a class="sidebar-link sidebar-sublink" th:if="${@rbacService.usuarioTienePermiso(usuarioLogueado.id, '/salidas', 'CONSULTAR')}"
@@ -49,9 +49,10 @@
 </div>
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="pageLoader">
+    <button class="theme-toggle" type="button" aria-label="Cambiar a tema claro" aria-pressed="false" title="Cambiar a tema claro">☀</button>
     <div class="page-loader" role="status" aria-live="polite" aria-hidden="true">
         <span class="page-loader-spinner" aria-hidden="true"></span>
         <span class="page-loader-message">Cargando SAFARI...</span>
     </div>
-    <script th:src="@{/js/page-transitions.js?v=1.1.0}" defer></script>
+    <script th:src="@{/js/page-transitions.js?v=1.5.4}" defer></script>
 </th:block>

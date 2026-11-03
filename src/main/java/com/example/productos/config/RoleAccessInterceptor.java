@@ -32,7 +32,7 @@ public class RoleAccessInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI().substring(request.getContextPath().length());
         String method = request.getMethod();
         if (path.equals("/health") || path.startsWith("/actuator/")
-                || path.equals("/login") || path.equals("/logout")
+                || path.equals("/login") || path.equals("/registro") || path.equals("/logout")
                 || path.startsWith("/css/") || path.startsWith("/js/")
                 || path.startsWith("/images/") || path.equals("/favicon.ico")) {
             return true;

@@ -72,7 +72,7 @@ class AdminUsersAndRolesIntegrationTest {
             user.setRoles(admin.getRoles());
             usuarioRepository.save(user);
         }
-        long totalPages = (usuarioRepository.count() + 8) / 9;
+        long totalPages = (usuarioRepository.count() + 4) / 5;
 
         mockMvc.perform(get("/usuarios").session(adminSession))
                 .andExpect(status().isOk())
@@ -94,11 +94,13 @@ class AdminUsersAndRolesIntegrationTest {
                 .andExpect(content().string(not(containsString("onclick="))))
                 .andExpect(content().string(not(containsString("onsubmit="))))
                 .andExpect(content().string(containsString("href=\"/usuarios?page=1\"")))
+                .andExpect(content().string(containsString("Mostrando 1–5 de ")))
                 .andExpect(content().string(containsString("Página 1 de")));
 
         mockMvc.perform(get("/usuarios").param("page", "1").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Página 2 de")))
+                .andExpect(content().string(containsString("Mostrando 6–10 de ")))
                 .andExpect(content().string(containsString("href=\"/usuarios?page=0\"")))
                 .andExpect(content().string(containsString("ZZZ Page User")));
 

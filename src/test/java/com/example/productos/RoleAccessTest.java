@@ -150,7 +150,9 @@ class RoleAccessTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("dashboard-analytics")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("role=\"progressbar\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Actividad de este mes")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Actividad de este mes")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"inventory-workspace\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/#inventory-workspace\"")));
     }
 
     @Test

@@ -47,7 +47,9 @@ public class ProductoWebController {
         model.addAttribute("usuarioLogueado", usuario);
         model.addAttribute("esAdmin", esAdmin(usuario));
         model.addAttribute("esVendedor", esVendedor(usuario));
-        model.addAttribute("esCliente", usuario == null);
+        boolean esCliente = usuario == null || usuario.tieneRol("CLIENTE");
+        model.addAttribute("esCliente", esCliente);
+        model.addAttribute("esPersonal", usuario != null && !esCliente);
         model.addAttribute("dashboard", dashboardService.obtenerResumenDelMes());
         model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
         model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));
@@ -96,6 +98,7 @@ public class ProductoWebController {
         model.addAttribute("esAdmin", esAdmin(usuario));
         model.addAttribute("esVendedor", esVendedor(usuario));
         model.addAttribute("esCliente", false);
+        model.addAttribute("esPersonal", true);
         model.addAttribute("dashboard", dashboardService.obtenerResumenDelMes());
         model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
         model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));

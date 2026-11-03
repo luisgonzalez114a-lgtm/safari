@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entradas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body>
 <div class="app-shell">
@@ -33,7 +33,7 @@
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Registrar entrada</summary>
                 <div class="disclosure-content">
                     <p class="muted-copy">Cada línea registra proveedor, producto, cantidad y costo. El inventario se incrementa al guardar.</p>
-                    <form th:action="@{/entradas/guardar}" method="post" class="form-grid">
+                    <form th:action="@{/entradas/guardar}" method="post" class="form-grid" autocomplete="off">
                         <div class="field">
                             <label for="proveedorId">Proveedor</label>
                             <select id="proveedorId" name="proveedorId" required>

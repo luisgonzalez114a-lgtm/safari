@@ -67,6 +67,12 @@ public class DataSeeder {
                         return rolRepository.save(nuevoRol);
                     });
 
+            rolRepository.findByNombreIgnoreCase("CLIENTE").orElseGet(() -> {
+                Rol nuevoRol = new Rol();
+                nuevoRol.setNombre("CLIENTE");
+                return rolRepository.save(nuevoRol);
+            });
+
             if (marcaRepository.findAll().isEmpty()) {
                 Marca marcaGeneral = new Marca();
                 marcaGeneral.setNombre("General");
@@ -90,7 +96,7 @@ public class DataSeeder {
                 proveedorRepository.save(proveedorGeneral);
             }
 
-            if (usuarioRepository.findByCorreo("admin@safari.com").isEmpty()) {
+            if (usuarioRepository.findByCorreoIgnoreCase("admin@safari.com").isEmpty()) {
                 Usuario admin = new Usuario();
                 admin.setNombre("Administrador");
                 admin.setTelefono("0000000000");
@@ -101,7 +107,7 @@ public class DataSeeder {
                 usuarioRepository.save(admin);
             }
 
-            if (seedDemoUsers && usuarioRepository.findByCorreo("usuario@safari.com").isEmpty()) {
+            if (seedDemoUsers && usuarioRepository.findByCorreoIgnoreCase("usuario@safari.com").isEmpty()) {
                 Usuario usuario = new Usuario();
                 usuario.setNombre("Usuario normal");
                 usuario.setTelefono("1111111111");
@@ -112,7 +118,7 @@ public class DataSeeder {
                 usuarioRepository.save(usuario);
             }
 
-            if (seedDemoUsers && usuarioRepository.findByCorreo("vendedor@safari.com").isEmpty()) {
+            if (seedDemoUsers && usuarioRepository.findByCorreoIgnoreCase("vendedor@safari.com").isEmpty()) {
                 Usuario vendedor = new Usuario();
                 vendedor.setNombre("Vendedor de prueba");
                 vendedor.setTelefono("555-0101");

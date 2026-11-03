@@ -221,6 +221,8 @@ public class RbacService {
                 new DefaultGrant("/salidas", List.of(CONSULTAR, CREAR))), vistas, modulos, permisos);
         seedRoleDefaults("USER", List.of(new DefaultGrant("/inventario", List.of(CONSULTAR))),
                 vistas, modulos, permisos);
+        seedRoleDefaults("CLIENTE", List.of(new DefaultGrant("/inventario", List.of(CONSULTAR))),
+                vistas, modulos, permisos);
         seedRoleDefaults("EDITOR", List.of(new DefaultGrant("/inventario", List.of(CONSULTAR, CREAR, EDITAR))),
                 vistas, modulos, permisos);
     }

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.4}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body>
 <div class="app-shell">
@@ -32,44 +32,63 @@
             <details class="add-disclosure wide-add-disclosure">
                 <summary class="btn btn-primary"><span aria-hidden="true">+</span> Registrar venta</summary>
                 <div class="disclosure-content">
-                    <p class="muted-copy">Busca cada producto, indica la cantidad y presiona Enter para añadirlo a la venta.</p>
-                    <form th:action="@{/salidas/guardar}" method="post" class="form-grid sale-form">
-                        <div class="sale-picker">
-                            <div class="field sale-search-field">
-                                <label for="sale-product-search">Buscar producto</label>
-                                <input id="sale-product-search" type="search" list="sale-product-options"
-                                       autocomplete="off" placeholder="Escribe el nombre o código del producto">
-                                <datalist id="sale-product-options">
-                                    <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
-                                            th:value="${p.codigo + ' · ' + p.nombre}"
-                                            th:attr="data-product-id=${p.id},data-price=${p.precioActual},data-stock=${p.stockActual},data-code=${p.codigo},data-name=${p.nombre}"
-                                            th:label="${'Disponible: ' + p.stockActual + ' · $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
-                                </datalist>
-                            </div>
-                            <div class="field sale-quantity-field">
-                                <label for="sale-quantity">Cantidad</label>
-                                <input id="sale-quantity" type="number" min="1" value="1" inputmode="numeric">
-                            </div>
-                            <button id="add-sale-item" class="btn btn-secondary" type="button">Añadir a la venta</button>
+                    <form th:action="@{/salidas/guardar}" method="post" class="form-grid sale-form" autocomplete="off">
+                        <datalist id="sale-product-options">
+                            <option th:each="p : ${productos}" th:if="${p.stockActual > 0}"
+                                    th:value="${p.codigo + ' · ' + p.nombre}"
+                                    th:attr="data-product-id=${p.id},data-price=${p.precioActual},data-stock=${p.stockActual},data-code=${p.codigo},data-name=${p.nombre},data-description=${p.descripcion}"
+                                    th:label="${'Disponible: ' + p.stockActual + ' · $' + #numbers.formatDecimal(p.precioActual, 1, 2)}"></option>
+                        </datalist>
+                        <div class="sale-workspace">
+                            <section class="sale-products-panel" aria-label="Productos disponibles">
+                                <div class="sale-picker">
+                                    <div class="field sale-search-field">
+                                        <label for="sale-product-search">Buscar producto</label>
+                                        <input id="sale-product-search" type="search" list="sale-product-options"
+                                               autocomplete="off" placeholder="Nombre, código, especie, medicamento, accesorio, juguete...">
+                                    </div>
+                                    <div class="field sale-quantity-field">
+                                        <label for="sale-quantity">Cantidad</label>
+                                        <input id="sale-quantity" type="number" min="1" value="1" inputmode="numeric">
+                                    </div>
+                                    <button id="add-sale-item" class="btn btn-secondary" type="button">Añadir a la venta</button>
+                                </div>
+                                <div class="sale-category-filters" role="group" aria-label="Filtrar por tipo de producto">
+                                    <button class="sale-filter-chip is-active" type="button" data-category="all" aria-pressed="true">Todos</button>
+                                    <button class="sale-filter-chip" type="button" data-category="dog" aria-pressed="false">Perros</button>
+                                    <button class="sale-filter-chip" type="button" data-category="cat" aria-pressed="false">Gatos</button>
+                                    <button class="sale-filter-chip" type="button" data-category="medicine" aria-pressed="false">Medicinas</button>
+                                    <button class="sale-filter-chip" type="button" data-category="health" aria-pressed="false">Consultorio</button>
+                                    <button class="sale-filter-chip" type="button" data-category="accessories" aria-pressed="false">Accesorios</button>
+                                    <button class="sale-filter-chip" type="button" data-category="toys" aria-pressed="false">Juguetes</button>
+                                    <button class="sale-filter-chip" type="button" data-category="food" aria-pressed="false">Alimentación</button>
+                                    <button class="sale-filter-chip" type="button" data-category="hygiene" aria-pressed="false">Higiene</button>
+                                </div>
+                                <div id="sale-product-grid" class="sale-product-grid" aria-live="polite"></div>
+                                <p id="sale-products-empty" class="sale-products-empty" hidden>No hay productos disponibles con ese filtro.</p>
+                            </section>
+                            <aside class="sale-checkout" aria-label="Venta actual">
+                                <h3>Venta actual</h3>
+                                <div class="sale-cart-wrap">
+                                    <table class="sale-cart">
+                                        <thead>
+                                        <tr><th>Producto</th><th>Cant.</th><th>Importe</th><th></th></tr>
+                                        </thead>
+                                        <tbody id="sale-lines">
+                                        <tr class="sale-cart-empty"><td colspan="4">Añade productos para comenzar.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="sale-form-actions">
+                                    <strong class="sale-total-preview">Total <span id="sale-total">$0.00</span></strong>
+                                    <button class="btn btn-primary sale-confirm-button" type="submit"
+                                            th:disabled="${!hayProductosDisponibles}" disabled>
+                                        Cobrar
+                                    </button>
+                                </div>
+                            </aside>
                         </div>
                         <p id="sale-picker-error" class="sale-picker-error" role="alert" hidden></p>
-                        <div class="sale-cart-wrap">
-                            <table class="sale-cart">
-                                <thead>
-                                <tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th></th></tr>
-                                </thead>
-                                <tbody id="sale-lines">
-                                <tr class="sale-cart-empty"><td colspan="5">Aún no has añadido productos.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="sale-form-actions">
-                            <strong class="sale-total-preview">Total de la venta: <span id="sale-total">$0.00</span></strong>
-                            <button class="btn btn-primary sale-confirm-button" type="submit"
-                                    th:disabled="${!hayProductosDisponibles}" disabled>
-                                Confirmar venta e imprimir comprobante
-                            </button>
-                        </div>
                         <p class="muted-copy" th:if="${!hayProductosDisponibles}">No hay productos con existencias disponibles para vender.</p>
                     </form>
                 </div>
@@ -107,6 +126,6 @@
     </div>
 </div>
 <th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
-<script th:src="@{/js/sales-cart.js?v=1.0.0}" defer></script>
+<script th:src="@{/js/sales-cart.js?v=2.0.3}" defer></script>
 </body>
 </html>

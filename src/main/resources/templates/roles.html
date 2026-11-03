@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roles - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body>
 <div class="app-shell">
@@ -24,19 +24,21 @@
                 <h2>Roles y permisos</h2>
                 <p class="muted-copy">Cada usuario puede tener varios roles; sus permisos se combinan.</p>
             </div>
-            <a class="btn btn-secondary" th:href="@{/roles/permisos}">Configurar permisos</a>
-            <details class="add-disclosure">
-                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Crear rol</summary>
-                <div class="disclosure-content">
-                    <form th:action="@{/roles/guardar}" method="post" class="form-grid">
-                        <div class="field">
-                            <label for="nombreRol">Nombre del rol</label>
-                            <input id="nombreRol" type="text" name="nombre" placeholder="Ej. SUPERVISOR" maxlength="50" required />
-                        </div>
-                        <button class="btn btn-primary" type="submit">Guardar rol</button>
-                    </form>
-                </div>
-            </details>
+            <div class="role-section-actions">
+                <a class="btn btn-secondary" th:href="@{/roles/permisos}">Configurar permisos</a>
+                <details class="add-disclosure">
+                    <summary class="btn btn-primary"><span aria-hidden="true">+</span> Crear rol</summary>
+                    <div class="disclosure-content">
+                        <form th:action="@{/roles/guardar}" method="post" class="form-grid" autocomplete="off">
+                            <div class="field">
+                                <label for="nombreRol">Nombre del rol</label>
+                                <input id="nombreRol" type="text" name="nombre" placeholder="Ej. SUPERVISOR" maxlength="50" required autocomplete="off" />
+                            </div>
+                            <button class="btn btn-primary" type="submit">Guardar rol</button>
+                        </form>
+                    </div>
+                </details>
+            </div>
         </div>
         <div class="permission-reference" aria-label="Permisos iniciales de los roles del sistema">
             <article class="permission-card">

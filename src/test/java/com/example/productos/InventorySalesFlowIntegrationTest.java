@@ -136,6 +136,8 @@ class InventorySalesFlowIntegrationTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("sale-lines")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("sale-product-search")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir a la venta")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-category=\"accessories\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-category=\"toys\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("name=\"observaciones\""))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("15.00")));

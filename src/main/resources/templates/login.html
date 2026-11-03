@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAFARI · Acceso</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=1.9.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
 </head>
 <body class="login-page">
 <div class="login-card">
@@ -17,6 +17,7 @@
     </div>
 
     <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+    <div class="notice success-notice" th:if="${mensaje != null}" th:text="${mensaje}"></div>
 
     <form th:action="@{/login}" method="post" class="form-block">
         <div class="field">
@@ -31,6 +32,7 @@
     </form>
 
     <a class="btn btn-secondary public-catalog-link" th:href="@{/}">Ver productos disponibles</a>
+    <a class="btn btn-secondary public-catalog-link" th:href="@{/registro}">Crear cuenta de cliente</a>
 
     <details class="demo-access" th:if="${@environment.getProperty('safari.seed.demo-users', 'true') == 'true'}">
         <summary>¿Primera vez? Ver acceso de demostración</summary>

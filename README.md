@@ -134,8 +134,8 @@ Las pantallas se renderizan con Thymeleaf desde Java y usan estilos locales de T
 
 ## Roles y operación diaria
 
-- **Cliente:** puede abrir `/` sin iniciar sesión y consultar el catálogo, precios y existencias. No puede operar la caja ni modificar inventario.
-- **RBAC por rol:** las asignaciones se organizan como módulo → vista → acción (`CONSULTAR`, `CREAR`, `EDITAR`, `ELIMINAR`). El servidor comprueba el permiso en cada ruta web y API; la matriz se administra desde **Roles → Configurar permisos**. `ADMIN` conserva acceso completo protegido; `VENDEDOR`, `USER` y `EDITOR` reciben permisos iniciales que el administrador puede cambiar.
+- **Cliente:** puede consultar el catálogo, precios y existencias sin iniciar sesión o crear una cuenta desde `/registro`. Las cuentas públicas reciben únicamente el rol `CLIENTE`; no pueden operar la caja ni modificar inventario.
+- **RBAC por rol:** las asignaciones se organizan como módulo → vista → acción (`CONSULTAR`, `CREAR`, `EDITAR`, `ELIMINAR`). El servidor comprueba el permiso en cada ruta web y API; la matriz se administra desde **Roles → Configurar permisos**. `ADMIN` conserva acceso completo protegido; `VENDEDOR`, `USER`, `CLIENTE` y `EDITOR` reciben permisos iniciales que el administrador puede cambiar.
 - **Dashboard:** la pantalla principal presenta productos, unidades, stock mínimo, entradas, ventas e importe vendido del mes; las barras muestran el peso del stock mínimo y comparan la actividad mensual. Los importes de operación solo se muestran a personal autenticado.
 - **Auditoría:** la pantalla exclusiva de `ADMIN` muestra hasta 100 eventos recientes. Se registran autenticaciones, denegaciones de acceso, cambios RBAC, movimientos y operaciones CRUD; no se almacenan contraseñas ni los datos enviados en formularios.
 - **VENDEDOR:** puede registrar entradas de mercancía y ventas desde `/entradas` y `/salidas`. Cada venta agrupa varios productos, calcula el total y descuenta todas las existencias en una sola transacción; luego permite consultar e imprimir un comprobante interno descriptivo (no fiscal).
@@ -145,7 +145,7 @@ Desde **Proveedores y catálogos**, ADMIN puede editar o eliminar marcas, catego
 
 Los movimientos se escriben desde las pantallas de operación para que encabezado, detalles de todos los productos, cambio de existencias y evento de auditoría queden coordinados. Las rutas API de movimientos son de consulta; las rutas API de escritura requieren una sesión con los permisos correspondientes.
 
-Las pruebas de integración cubren CRUD, asignación y revocación de permisos, registro de accesos denegados, indicadores, ventas agrupadas con comprobante imprimible, rechazo de sobreventa y reversión ante fallos.
+Las pruebas de integración cubren registro público de clientes y sus permisos limitados, CRUD, asignación y revocación de permisos, registro de accesos denegados, indicadores, ventas agrupadas con comprobante imprimible, rechazo de sobreventa y reversión ante fallos.
 
 ## Acceso inicial para pruebas
 
