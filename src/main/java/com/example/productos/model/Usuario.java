@@ -36,6 +36,9 @@ public class Usuario {
     @Column
     private Integer estatus = 1;
 
+    @Column(name = "bono_descuento_disponible", nullable = false)
+    private boolean bonoDescuentoDisponible;
+
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro = LocalDateTime.now();
 
@@ -109,6 +112,14 @@ public class Usuario {
 
     public void setEstatus(Integer estatus) {
         this.estatus = estatus;
+    }
+
+    public boolean isBonoDescuentoDisponible() {
+        return bonoDescuentoDisponible;
+    }
+
+    public void setBonoDescuentoDisponible(boolean bonoDescuentoDisponible) {
+        this.bonoDescuentoDisponible = bonoDescuentoDisponible;
     }
 
     public LocalDateTime getFechaRegistro() {

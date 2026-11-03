@@ -131,7 +131,22 @@
 
     const themeToggle = document.querySelector(".theme-toggle");
     if (themeToggle) {
-        const savedTheme = localStorage.getItem("safari-theme");
+        const loadTheme = () => {
+            try {
+                return window.localStorage.getItem("safari-theme");
+            } catch (error) {
+                console.warn("No se pudo leer la preferencia de tema de SAFARI.", error);
+                return null;
+            }
+        };
+        const saveTheme = (theme) => {
+            try {
+                window.localStorage.setItem("safari-theme", theme);
+            } catch (error) {
+                console.warn("No se pudo guardar la preferencia de tema de SAFARI.", error);
+            }
+        };
+        const savedTheme = loadTheme();
         const applyTheme = (theme) => {
             document.documentElement.dataset.theme = theme;
             const isDark = theme === "dark";
@@ -144,9 +159,47 @@
         applyTheme(savedTheme === "light" ? "light" : "dark");
         themeToggle.addEventListener("click", () => {
             const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-            localStorage.setItem("safari-theme", nextTheme);
+            saveTheme(nextTheme);
             applyTheme(nextTheme);
         });
+    }
+
+    if (themeToggle?.dataset.authenticated === "true") {
+        const pawTrail = document.createElement("div");
+        pawTrail.className = "paw-trail";
+        pawTrail.setAttribute("aria-hidden", "true");
+        document.body.append(pawTrail);
+
+        const leavePawPrint = () => {
+            const print = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            print.classList.add("paw-print");
+            print.setAttribute("viewBox", "0 0 64 72");
+            print.setAttribute("aria-hidden", "true");
+
+            const pad = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            pad.setAttribute("d", "M32 36c-11 0-19 8-19 18 0 8 7 12 19 12s19-4 19-12c0-10-8-18-19-18Z");
+            print.append(pad);
+
+            [[14, 29, 6, 8], [25, 18, 6, 8], [39, 18, 6, 8], [50, 29, 6, 8]].forEach(([cx, cy, rx, ry]) => {
+                const toe = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+                toe.setAttribute("cx", cx);
+                toe.setAttribute("cy", cy);
+                toe.setAttribute("rx", rx);
+                toe.setAttribute("ry", ry);
+                print.append(toe);
+            });
+
+            const maxX = Math.max(0, window.innerWidth - 68);
+            const maxY = Math.max(0, window.innerHeight - 76);
+            print.style.left = `${Math.random() * maxX}px`;
+            print.style.top = `${Math.random() * maxY}px`;
+            print.style.setProperty("--paw-angle", `${Math.random() * 100 - 50}deg`);
+            pawTrail.append(print);
+            window.setTimeout(() => print.remove(), 4600);
+        };
+
+        leavePawPrint();
+        window.setInterval(leavePawPrint, 1000);
     }
 
     document.querySelectorAll(".user-form-disclosure").forEach((disclosure) => {
@@ -158,7 +211,7 @@
         });
     });
 
-    document.querySelectorAll(".data-table:not(.users-table)").forEach((table) => {
+    document.querySelectorAll(".data-table:not(.users-table):not(.inventory-table)").forEach((table) => {
         const body = table.tBodies[0];
         if (!body) return;
 

@@ -1,10 +1,13 @@
 package com.example.productos.controller;
 
 import com.example.productos.model.Rol;
+import com.example.productos.model.Salida;
 import com.example.productos.model.Usuario;
 import com.example.productos.repository.RolRepository;
+import com.example.productos.repository.SalidaRepository;
 import com.example.productos.repository.UsuarioRepository;
 import com.example.productos.service.AuditService;
+import com.example.productos.service.RbacService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -14,12 +17,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.List;
 import java.util.Set;
 
@@ -31,22 +38,44 @@ public class UsuarioWebController {
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final RbacService rbacService;
+    private final SalidaRepository salidaRepository;
 
     public UsuarioWebController(UsuarioRepository usuarioRepository,
                                 RolRepository rolRepository,
                                 PasswordEncoder passwordEncoder,
-                                AuditService auditService) {
+                                AuditService auditService,
+                                RbacService rbacService,
+                                SalidaRepository salidaRepository) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
+        this.rbacService = rbacService;
+        this.salidaRepository = salidaRepository;
     }
 
     @GetMapping("/usuarios")
-    public String usuarios(@RequestParam(defaultValue = "0") int page, HttpSession session, Model model) {
+    public String usuarios(@RequestParam(defaultValue = "0") int page,
+                           @RequestParam(required = false) String modo,
+                           @RequestParam(required = false) Integer ventaId,
+                           HttpSession session,
+                           Model model) {
         Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
         if (usuario == null) {
             return "redirect:/login";
+        }
+        if ("cliente".equals(modo)) {
+            if (!rbacService.usuarioTienePermiso(usuario.getId(), "/salidas", RbacService.CREAR)) {
+                return "redirect:/";
+            }
+            Salida venta = ventaId == null ? null : salidaRepository.findById(ventaId).orElse(null);
+            if (venta == null || venta.getClienteUsuarioId() != null || venta.getClienteNombre() == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró el cliente pendiente de registro.");
+            }
+            model.addAttribute("usuarioLogueado", usuario);
+            model.addAttribute("ventaId", ventaId);
+            return "registro-cliente-venta-form";
         }
         if (!esAdmin(usuario)) {
             return "redirect:/";
@@ -97,10 +126,73 @@ public class UsuarioWebController {
         usuario.setTelefono(limpiar(telefono));
         usuario.setEstatus(1);
         usuario.setRoles(roles);
+        usuario.setBonoDescuentoDisponible(roles.stream()
+                .anyMatch(rol -> "CLIENTE".equalsIgnoreCase(rol.getNombre())));
         usuarioRepository.save(usuario);
         auditService.registrar(usuarioDeSesion(session).getId(), "CREAR_USUARIO", "usuarios", usuario.getId());
-        attributes.addFlashAttribute("mensaje", "Usuario creado.");
+        attributes.addFlashAttribute("mensaje", usuario.isBonoDescuentoDisponible()
+                ? "Usuario creado. Recibió un bono del 5% para su primera compra."
+                : "Usuario creado.");
         return "redirect:/usuarios";
+    }
+
+    @PostMapping("/usuarios/guardar-cliente")
+    @Transactional
+    public String guardarClienteDeVenta(@RequestParam Integer ventaId,
+                                        @RequestParam String nombre,
+                                        @RequestParam String correo,
+                                        @RequestParam String clave,
+                                        @RequestParam(required = false) String telefono,
+                                        HttpSession session,
+                                        RedirectAttributes attributes) {
+        Usuario adminOrSeller = usuarioDeSesion(session);
+        if (adminOrSeller == null
+                || !rbacService.usuarioTienePermiso(adminOrSeller.getId(), "/salidas", RbacService.CREAR)) {
+            return "redirect:/login";
+        }
+
+        Salida venta = salidaRepository.findById(ventaId).orElse(null);
+        if (venta == null || venta.getClienteUsuarioId() != null || venta.getClienteNombre() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró el cliente pendiente de registro.");
+        }
+
+        String nombreNormalizado = nombre == null ? "" : nombre.trim();
+        String correoNormalizado = correo == null ? "" : correo.trim().toLowerCase(Locale.ROOT);
+        String telefonoNormalizado = telefono == null || telefono.isBlank() ? null : telefono.trim();
+        boolean correoValido = correoNormalizado.length() <= 100
+                && correoNormalizado.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+        boolean claveValida = clave != null && clave.getBytes(StandardCharsets.UTF_8).length >= 8
+                && clave.getBytes(StandardCharsets.UTF_8).length <= 72;
+        if (nombreNormalizado.isBlank() || nombreNormalizado.length() > 100 || !correoValido || !claveValida
+                || (telefonoNormalizado != null && telefonoNormalizado.length() > 20)) {
+            attributes.addFlashAttribute("error",
+                    "Revisa los datos: nombre obligatorio, correo válido y contraseña de 8 a 72 bytes.");
+            return "redirect:/usuarios?modo=cliente&ventaId=" + ventaId;
+        }
+        if (usuarioRepository.findByCorreoIgnoreCase(correoNormalizado).isPresent()) {
+            attributes.addFlashAttribute("error", "Ya existe un usuario con ese correo.");
+            return "redirect:/usuarios?modo=cliente&ventaId=" + ventaId;
+        }
+
+        Rol rolCliente = rolRepository.findByNombreIgnoreCase("CLIENTE")
+                .orElseThrow(() -> new IllegalStateException("No está configurado el rol CLIENTE."));
+        Usuario cliente = new Usuario();
+        cliente.setNombre(nombreNormalizado);
+        cliente.setCorreo(correoNormalizado);
+        cliente.setTelefono(telefonoNormalizado);
+        cliente.setClave(passwordEncoder.encode(clave));
+        cliente.setRoles(Set.of(rolCliente));
+        cliente.setEstatus(1);
+        cliente.setBonoDescuentoDisponible(true);
+        cliente = usuarioRepository.save(cliente);
+
+        venta.setClienteUsuarioId(cliente.getId());
+        venta.setClienteNombre(cliente.getNombre());
+        venta.setClienteTelefono(cliente.getTelefono());
+        venta.setClienteCorreo(cliente.getCorreo());
+        salidaRepository.save(venta);
+        auditService.registrar(adminOrSeller.getId(), "REGISTRAR_CLIENTE_VENTA", "usuarios", cliente.getId());
+        return "redirect:/salidas/" + ventaId + "/comprobante";
     }
 
     @PostMapping("/usuarios/actualizar")

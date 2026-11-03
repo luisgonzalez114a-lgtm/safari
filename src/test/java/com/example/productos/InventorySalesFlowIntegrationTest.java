@@ -81,7 +81,7 @@ class InventorySalesFlowIntegrationTest {
         int productId = objectMapper.readTree(createdProduct.getResponse().getContentAsString())
                 .get("id").asInt();
 
-        mockMvc.perform(post("/entradas/guardar")
+        MvcResult entradaResponse = mockMvc.perform(post("/entradas/guardar")
                         .session(adminSession)
                         .param("proveedorId", supplier.getId().toString())
                         .param("productoId", Integer.toString(productId))
@@ -89,9 +89,9 @@ class InventorySalesFlowIntegrationTest {
                         .param("precioCompra", "4.25")
                         .param("observaciones", "Recepcion SAFARI"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/entradas"))
                 .andExpect(flash().attribute("mensaje",
-                        "Entrada guardada; las existencias se actualizaron."));
+                        "Entrada guardada; las existencias se actualizaron."))
+                .andReturn();
 
         Producto afterReceipt = productoRepository.findById(productId).orElseThrow();
         assertEquals(5, afterReceipt.getStockActual());
@@ -101,6 +101,22 @@ class InventorySalesFlowIntegrationTest {
         assertTrue(detalleEntradaRepository.findAll().stream()
                 .anyMatch(detail -> detail.getProducto().getId().equals(productId)
                         && detail.getCantidad() == 5));
+        com.example.productos.model.Entrada entrada = entradaRepository.findAll().stream()
+                .filter(entry -> "Recepcion SAFARI".equals(entry.getObservaciones()))
+                .findFirst().orElseThrow();
+        assertEquals("/entradas/" + entrada.getId() + "/comprobante",
+                entradaResponse.getResponse().getRedirectedUrl());
+        mockMvc.perform(get("/entradas/{id}/comprobante", entrada.getId()).session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("COMPROBANTE DE ENTRADA")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(productName)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(supplier.getNombre())))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Fecha y hora")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                                .format(entrada.getFechaEntrada()))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("$21.25")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Recepcion SAFARI")));
 
         mockMvc.perform(get("/api/entradas").session(adminSession))
                 .andExpect(status().isOk())
@@ -147,6 +163,96 @@ class InventorySalesFlowIntegrationTest {
         mockMvc.perform(get("/api/detalles-salidas").session(adminSession))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(productName)));
+    }
+
+    @Test
+    void oneReceiptCanCreateProductsAndReceiveSeveralLinesAtomically() throws Exception {
+        MockHttpSession adminSession = adminSession();
+        Proveedor supplier = proveedorRepository.findAll().get(0);
+        Producto existing = crearProducto("BATCH-" + UUID.randomUUID(),
+                "Producto existente lote", new BigDecimal("3.00"), 2);
+        String newCode = "NEW-" + UUID.randomUUID();
+
+        MvcResult response = mockMvc.perform(post("/entradas/guardar")
+                        .session(adminSession)
+                        .param("proveedorId", supplier.getId().toString())
+                        .param("referenciaDocumento", "FAC-2026-009")
+                        .param("observaciones", "Recepción de prueba")
+                        .param("tipoProducto", "EXISTENTE", "NUEVO")
+                        .param("productoId", existing.getId().toString(), "")
+                        .param("codigoNuevo", "", newCode)
+                        .param("nombreNuevo", "", "Producto creado al recibir")
+                        .param("descripcionNueva", "", "Creado desde una entrada")
+                        .param("marcaIdNueva", "", "")
+                        .param("categoriaIdNueva", "", "")
+                        .param("precioVentaNuevo", "", "12.50")
+                        .param("stockMinimoNuevo", "", "2")
+                        .param("cantidad", "3", "4")
+                        .param("precioCompra", "4.25", "7.10"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        com.example.productos.model.Entrada entry = entradaRepository.findAll().stream()
+                .filter(value -> "FAC-2026-009".equals(value.getReferenciaDocumento()))
+                .findFirst().orElseThrow();
+        Producto updatedExisting = productoRepository.findById(existing.getId()).orElseThrow();
+        Producto createdProduct = productoRepository.findAll().stream()
+                .filter(value -> newCode.equals(value.getCodigo())).findFirst().orElseThrow();
+
+        assertEquals("/entradas/" + entry.getId() + "/comprobante", response.getResponse().getRedirectedUrl());
+        assertEquals(5, updatedExisting.getStockActual());
+        assertEquals(new BigDecimal("4.25"), updatedExisting.getPrecioCompra());
+        assertEquals(4, createdProduct.getStockActual());
+        assertEquals(new BigDecimal("7.10"), createdProduct.getPrecioCompra());
+        assertEquals(new BigDecimal("12.50"), createdProduct.getPrecioActual());
+        assertEquals(2, detalleEntradaRepository.findAllByEntrada_IdOrderByIdAsc(entry.getId()).size());
+
+        mockMvc.perform(get("/entradas/{id}/comprobante", entry.getId()).session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("FAC-2026-009")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Producto existente lote")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Producto creado al recibir")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Ver inventario actualizado")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("$41.15")));
+        mockMvc.perform(get("/entradas").session(adminSession))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("N.º de factura o documento")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Agregar producto")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Es un producto nuevo")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-entry-view=\"grid\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-entry-view=\"rows\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Ver productos recibidos")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("FAC-2026-009")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Producto creado al recibir")));
+    }
+
+    @Test
+    void invalidLineDoesNotCreateProductOrPartialReceipt() throws Exception {
+        MockHttpSession adminSession = adminSession();
+        Proveedor supplier = proveedorRepository.findAll().get(0);
+        long receiptCountBefore = entradaRepository.count();
+        String newCode = "ROLLBACK-" + UUID.randomUUID();
+
+        mockMvc.perform(post("/entradas/guardar")
+                        .session(adminSession)
+                        .param("proveedorId", supplier.getId().toString())
+                        .param("tipoProducto", "NUEVO", "EXISTENTE")
+                        .param("productoId", "", "999999")
+                        .param("codigoNuevo", newCode, "")
+                        .param("nombreNuevo", "Producto que no debe guardarse", "")
+                        .param("descripcionNueva", "", "")
+                        .param("marcaIdNueva", "", "")
+                        .param("categoriaIdNueva", "", "")
+                        .param("precioVentaNuevo", "10.00", "")
+                        .param("stockMinimoNuevo", "0", "")
+                        .param("cantidad", "5", "1")
+                        .param("precioCompra", "3.00", "1.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/entradas"))
+                .andExpect(flash().attributeExists("error"));
+
+        assertEquals(receiptCountBefore, entradaRepository.count());
+        assertTrue(productoRepository.findAll().stream().noneMatch(value -> newCode.equals(value.getCodigo())));
     }
 
     @Test

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${'Comprobante de venta #' + salida.id + ' - SAFARI'}">Comprobante de venta - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.1}">
 </head>
 <body class="receipt-body">
 <main class="receipt-page">
@@ -35,6 +35,13 @@
                 <span>Atendió</span>
                 <strong th:text="${salida.usuario.nombre}">Usuario</strong>
             </div>
+            <div th:if="${salida.clienteNombre != null}">
+                <span>Cliente</span>
+                <strong th:text="${salida.clienteNombre}">Cliente</strong>
+                <small th:text="${salida.clienteUsuarioId != null ? 'Usuario registrado' : 'Cliente no registrado'}">Cliente</small>
+                <small th:if="${salida.clienteTelefono != null}" th:text="${'Teléfono: ' + salida.clienteTelefono}"></small>
+                <small th:if="${salida.clienteCorreo != null}" th:text="${'Correo: ' + salida.clienteCorreo}"></small>
+            </div>
         </section>
 
         <section class="receipt-items">
@@ -62,9 +69,19 @@
             </table>
         </section>
 
-        <div class="receipt-total">
-            <span>Total de la venta</span>
-            <strong th:text="${'$' + #numbers.formatDecimal(salida.montoTotal, 1, 2)}">$0.00</strong>
+        <div class="receipt-totals">
+            <div>
+                <span>Subtotal</span>
+                <strong th:text="${'$' + #numbers.formatDecimal(salida.subtotal, 1, 2)}">$0.00</strong>
+            </div>
+            <div th:if="${salida.montoDescuento != null and salida.montoDescuento.signum() > 0}">
+                <span th:text="${'Bono de registro (' + #numbers.formatDecimal(salida.porcentajeDescuento, 1, 2) + '%)'}">Descuento</span>
+                <strong th:text="${'-$' + #numbers.formatDecimal(salida.montoDescuento, 1, 2)}">-$0.00</strong>
+            </div>
+            <div class="receipt-total">
+                <span>Total de la venta</span>
+                <strong th:text="${'$' + #numbers.formatDecimal(salida.montoTotal, 1, 2)}">$0.00</strong>
+            </div>
         </div>
 
         <section class="receipt-notes" th:if="${salida.observaciones != null and !salida.observaciones.isBlank()}">

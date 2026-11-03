@@ -266,7 +266,7 @@ public class RbacService {
                 || path.startsWith("/api/productos")) {
             return "/inventario";
         }
-        if (path.equals("/entradas") || path.equals("/entradas/guardar")
+        if (path.startsWith("/entradas")
                 || path.startsWith("/api/entradas") || path.startsWith("/api/detalles-entradas")) {
             return "/entradas";
         }

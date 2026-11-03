@@ -51,6 +51,16 @@ public class RoleAccessInterceptor implements HandlerInterceptor {
                 user = currentUser;
             }
         }
+        boolean registroDeClienteDeVenta = path.equals("/usuarios")
+                && "cliente".equals(request.getParameter("modo"));
+        boolean guardarClienteDeVenta = path.equals("/usuarios/guardar-cliente")
+                && "POST".equalsIgnoreCase(method);
+        if (registroDeClienteDeVenta || guardarClienteDeVenta) {
+            if (user != null && rbacService.usuarioTienePermiso(user.getId(), "/salidas", RbacService.CREAR)) {
+                return true;
+            }
+            return deny(request, response, path, user);
+        }
         if (user == null && isPublicRead(path, method)) {
             return true;
         }

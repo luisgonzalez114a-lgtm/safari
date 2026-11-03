@@ -141,6 +141,9 @@ class AdminCatalogCrudIntegrationTest {
                 .andReturn();
         int productId = objectMapper.readTree(createdProduct.getResponse().getContentAsString())
                 .get("id").asInt();
+        Producto productoCreado = productoRepository.findById(productId).orElseThrow();
+        assertEquals(0, productoCreado.getStockActual());
+        assertEquals(0, productoCreado.getPrecioCompra().compareTo(BigDecimal.ZERO));
 
         mockMvc.perform(get("/api/productos"))
                 .andExpect(status().isOk())
@@ -153,6 +156,9 @@ class AdminCatalogCrudIntegrationTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Producto Safari Editado " + suffix)));
         assertEquals("Producto Safari Editado " + suffix,
                 productoRepository.findById(productId).orElseThrow().getNombre());
+        assertEquals(0, productoRepository.findById(productId).orElseThrow().getStockActual());
+        assertEquals(0, productoRepository.findById(productId).orElseThrow()
+                .getPrecioCompra().compareTo(BigDecimal.ZERO));
 
         mockMvc.perform(delete("/api/productos/{id}", productId).session(adminSession))
                 .andExpect(status().isNoContent());

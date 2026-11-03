@@ -49,10 +49,14 @@
 </div>
 
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="pageLoader">
-    <button class="theme-toggle" type="button" aria-label="Cambiar a tema claro" aria-pressed="false" title="Cambiar a tema claro">☀</button>
+    <button class="theme-toggle" type="button" aria-label="Cambiar a tema claro" aria-pressed="false" title="Cambiar a tema claro"
+            th:attr="data-authenticated=${usuarioLogueado != null}">☀</button>
+    <button class="sound-toggle" type="button" data-sound-toggle aria-label="Activar sonidos"
+            aria-pressed="false" title="Activar sonidos">🔇</button>
     <div class="page-loader" role="status" aria-live="polite" aria-hidden="true">
         <span class="page-loader-spinner" aria-hidden="true"></span>
         <span class="page-loader-message">Cargando SAFARI...</span>
     </div>
-    <script th:src="@{/js/page-transitions.js?v=1.5.4}" defer></script>
+    <script th:src="@{/js/page-transitions.js?v=1.5.7}" defer></script>
+    <script th:src="@{/js/safari-sounds.js?v=1.0.0}" defer></script>
 </th:block>

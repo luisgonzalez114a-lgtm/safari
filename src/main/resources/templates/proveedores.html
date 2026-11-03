@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proveedores - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.22}">
 </head>
 <body>
 <div class="app-shell">
@@ -41,7 +41,25 @@
         <h2>Proveedores registrados</h2>
         <p th:if="${#lists.isEmpty(proveedores)}" class="empty-list-item">Aún no hay proveedores registrados.</p>
         <div class="table-wrap" th:unless="${#lists.isEmpty(proveedores)}">
-            <table class="table table-vcenter data-table suppliers-table">
+            <table class="table table-vcenter data-table suppliers-table"
+                   th:classappend="${puedeEditar or puedeEliminar} ? ' suppliers-admin-table' : ' suppliers-readonly-table'">
+                <colgroup th:if="${puedeEditar or puedeEliminar}">
+                    <col style="width: 6.43%">
+                    <col style="width: 17.14%">
+                    <col style="width: 12.14%">
+                    <col style="width: 12.86%">
+                    <col style="width: 17.86%">
+                    <col style="width: 19.28%">
+                    <col style="width: 14.29%">
+                </colgroup>
+                <colgroup th:unless="${puedeEditar or puedeEliminar}">
+                    <col style="width: 7.5%">
+                    <col style="width: 20%">
+                    <col style="width: 14.17%">
+                    <col style="width: 15%">
+                    <col style="width: 20.83%">
+                    <col style="width: 22.5%">
+                </colgroup>
                 <thead>
                 <tr>
                     <th>ID</th>

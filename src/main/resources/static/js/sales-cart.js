@@ -11,11 +11,23 @@
     const productGrid = document.getElementById("sale-product-grid");
     const emptyProductsMessage = document.getElementById("sale-products-empty");
     const categoryFilters = document.querySelector(".sale-category-filters");
+    const customerType = document.getElementById("tipo-cliente");
+    const registeredCustomerPanel = document.getElementById("cliente-registrado");
+    const registeredCustomerSelect = document.getElementById("cliente-id");
+    const temporaryCustomerPanel = document.getElementById("cliente-temporal");
+    const temporaryCustomerName = document.getElementById("cliente-nombre");
+    const subtotalElement = document.getElementById("sale-subtotal");
+    const discountRow = document.getElementById("sale-discount-row");
+    const discountElement = document.getElementById("sale-discount");
+    const discountPreview = document.getElementById("sale-discount-preview");
     const saleDisclosure = document.querySelector(".sale-form")?.closest(".add-disclosure");
 
     if (!form || !lineContainer || !productSearch || !quantityInput || !addItemButton
             || !totalElement || !confirmButton || !errorElement || !productGrid
-            || !emptyProductsMessage || !categoryFilters || !saleDisclosure) {
+            || !emptyProductsMessage || !categoryFilters || !customerType
+            || !registeredCustomerPanel || !registeredCustomerSelect || !temporaryCustomerPanel
+            || !temporaryCustomerName || !subtotalElement || !discountRow || !discountElement
+            || !discountPreview || !saleDisclosure) {
         return;
     }
 
@@ -40,7 +52,7 @@
             code: option.dataset.code,
             name: option.dataset.name,
             description: option.dataset.description || "",
-            price: Number(option.dataset.price),
+            priceCents: Math.round(Number(option.dataset.price) * 100),
             stock: Number.parseInt(option.dataset.stock, 10)
         };
         product.categories = productCategories(product);
@@ -99,13 +111,23 @@
         errorElement.hidden = !message;
     }
 
+    function updateCustomerFields() {
+        const isRegistered = customerType.value === "registrado";
+        registeredCustomerPanel.hidden = !isRegistered;
+        registeredCustomerSelect.disabled = !isRegistered;
+        registeredCustomerSelect.required = isRegistered;
+        temporaryCustomerPanel.hidden = isRegistered;
+        temporaryCustomerName.required = !isRegistered;
+        renderCart();
+    }
+
     function renderCart() {
-        let total = 0;
+        let cartSubtotalCents = 0;
         lineContainer.replaceChildren();
 
         selectedProducts.forEach((item, productId) => {
-            const subtotal = item.product.price * item.quantity;
-            total += subtotal;
+            const lineSubtotalCents = item.product.priceCents * item.quantity;
+            cartSubtotalCents += lineSubtotalCents;
 
             const row = document.createElement("tr");
             const productCell = document.createElement("td");
@@ -160,7 +182,7 @@
             productCell.append(productIdInput, quantityValueInput);
             const subtotalCell = document.createElement("td");
             subtotalCell.className = "sale-cart-subtotal";
-            subtotalCell.textContent = `$${money.format(subtotal)}`;
+            subtotalCell.textContent = `$${money.format(lineSubtotalCents / 100)}`;
             row.append(productCell, quantityCell, subtotalCell, actionCell);
             lineContainer.appendChild(row);
         });
@@ -175,7 +197,18 @@
             lineContainer.appendChild(emptyRow);
         }
 
-        totalElement.textContent = `$${money.format(total)}`;
+        const selectedCustomer = registeredCustomerSelect.selectedOptions[0];
+        const hasBonus = customerType.value === "registrado"
+                && selectedCustomer?.dataset.bonoDisponible === "true";
+        const discountCents = hasBonus ? Math.floor((cartSubtotalCents * 5 + 50) / 100) : 0;
+        subtotalElement.textContent = `$${money.format(cartSubtotalCents / 100)}`;
+        discountRow.hidden = discountCents <= 0;
+        discountElement.textContent = `$${money.format(discountCents / 100)}`;
+        discountPreview.hidden = !hasBonus;
+        discountPreview.textContent = hasBonus
+                ? `Bono aplicado: 5% de descuento (${money.format(discountCents / 100)}).`
+                : "";
+        totalElement.textContent = `$${money.format((cartSubtotalCents - discountCents) / 100)}`;
         confirmButton.disabled = selectedProducts.size === 0;
     }
 
@@ -214,10 +247,14 @@
             identity.append(name, detail);
             const price = document.createElement("strong");
             price.className = "sale-product-price";
-            price.textContent = `$${money.format(product.price)}`;
+            price.textContent = `$${money.format(product.priceCents / 100)}`;
             const stock = document.createElement("small");
             stock.className = "sale-product-stock";
-            stock.textContent = `${product.stock} disponibles`;
+            const selectedItem = selectedProducts.get(product.id);
+            if (selectedItem) addButton.classList.add("is-in-cart");
+            stock.textContent = selectedItem
+                    ? `En venta: ${selectedItem.quantity} · ${product.stock - selectedItem.quantity} por agregar`
+                    : `${product.stock} disponibles`;
             addButton.append(artwork, identity, price, stock);
             card.appendChild(addButton);
             productGrid.appendChild(card);
@@ -228,14 +265,14 @@
 
     function addProduct(selectedProduct) {
         const product = selectedProduct || products.find(item => item.value === productSearch.value);
-        const amount = Number.parseInt(quantityInput.value, 10);
+        const amount = Number(quantityInput.value);
 
         if (!product) {
             showError("Selecciona un producto de la lista de sugerencias.");
             productSearch.focus();
             return;
         }
-        if (!Number.isInteger(amount) || amount < 1) {
+        if (!Number.isSafeInteger(amount) || amount < 1) {
             showError("Indica una cantidad válida, mayor que cero.");
             quantityInput.focus();
             return;
@@ -260,6 +297,8 @@
 
     addItemButton.addEventListener("click", addProduct);
     productSearch.addEventListener("input", renderProducts);
+    customerType.addEventListener("change", updateCustomerFields);
+    registeredCustomerSelect.addEventListener("change", renderCart);
     categoryFilters.addEventListener("click", event => {
         const filter = event.target.closest(".sale-filter-chip");
         if (!filter) return;
@@ -308,6 +347,6 @@
         }
     });
 
-    renderCart();
+    updateCustomerFields();
     renderProducts();
 })();

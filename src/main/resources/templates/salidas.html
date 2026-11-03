@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.2}">
 </head>
 <body>
 <div class="app-shell">
@@ -49,7 +49,7 @@
                                     </div>
                                     <div class="field sale-quantity-field">
                                         <label for="sale-quantity">Cantidad</label>
-                                        <input id="sale-quantity" type="number" min="1" value="1" inputmode="numeric">
+                                        <input id="sale-quantity" type="number" min="1" step="1" value="1" inputmode="numeric">
                                     </div>
                                     <button id="add-sale-item" class="btn btn-secondary" type="button">Añadir a la venta</button>
                                 </div>
@@ -79,8 +79,51 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <section class="sale-customer-panel" aria-label="Cliente de la venta">
+                                    <h3>Cliente</h3>
+                                    <div class="field">
+                                        <label for="tipo-cliente">Tipo de cliente</label>
+                                        <select id="tipo-cliente" name="tipoCliente" required>
+                                            <option value="temporal" selected>No registrado</option>
+                                            <option value="registrado">Usuario registrado</option>
+                                        </select>
+                                    </div>
+                                    <div id="cliente-registrado" class="field" hidden>
+                                        <label for="cliente-id">Seleccionar usuario</label>
+                                        <select id="cliente-id" name="clienteId" disabled>
+                                            <option value="">Selecciona un cliente</option>
+                                            <option th:each="cliente : ${clientesRegistrados}"
+                                                    th:value="${cliente.id}"
+                                                    th:attr="data-bono-disponible=${cliente.bonoDescuentoDisponible}"
+                                                    th:text="${cliente.nombre + (cliente.correo != null ? ' · ' + cliente.correo : '')}"></option>
+                                        </select>
+                                        <small>Los clientes con un bono disponible reciben 5% de descuento automáticamente.</small>
+                                    </div>
+                                    <div id="cliente-temporal" class="sale-temporary-customer">
+                                        <div class="field">
+                                            <label for="cliente-nombre">Nombre</label>
+                                            <input id="cliente-nombre" name="clienteNombre" type="text"
+                                                   maxlength="100" autocomplete="off" required>
+                                        </div>
+                                        <div class="field">
+                                            <label for="cliente-telefono">Teléfono (opcional)</label>
+                                            <input id="cliente-telefono" name="clienteTelefono" type="tel"
+                                                   maxlength="20" autocomplete="off">
+                                        </div>
+                                        <div class="field">
+                                            <label for="cliente-correo">Correo (opcional)</label>
+                                            <input id="cliente-correo" name="clienteCorreo" type="email"
+                                                   maxlength="100" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <p id="sale-discount-preview" class="sale-discount-preview" hidden></p>
+                                </section>
                                 <div class="sale-form-actions">
-                                    <strong class="sale-total-preview">Total <span id="sale-total">$0.00</span></strong>
+                                    <div class="sale-total-summary">
+                                        <span>Subtotal <strong id="sale-subtotal">$0.00</strong></span>
+                                        <span id="sale-discount-row" hidden>Descuento <strong id="sale-discount">$0.00</strong></span>
+                                        <strong class="sale-total-preview" aria-live="polite" aria-atomic="true">Total <span id="sale-total">$0.00</span></strong>
+                                    </div>
                                     <button class="btn btn-primary sale-confirm-button" type="submit"
                                             th:disabled="${!hayProductosDisponibles}" disabled>
                                         Cobrar
@@ -100,15 +143,16 @@
             <div class="table-wrap">
                 <table class="table table-vcenter data-table">
                     <thead>
-                    <tr><th>N.º venta</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Atendió</th><th>Comprobante</th></tr>
+                    <tr><th>N.º venta</th><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Atendió</th><th>Comprobante</th></tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(ventas)}">
-                        <td class="empty-state" colspan="6">Todavía no hay ventas registradas.</td>
+                        <td class="empty-state" colspan="7">Todavía no hay ventas registradas.</td>
                     </tr>
                     <tr th:each="venta : ${ventas}">
                         <td th:text="${'#' + venta.salida.id}"></td>
                         <td th:text="${venta.salida.fechaSalida != null ? #temporals.format(venta.salida.fechaSalida, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                        <td th:text="${venta.salida.clienteNombre != null ? venta.salida.clienteNombre : '—'}"></td>
                         <td>
                             <span th:each="detalle, status : ${venta.detalles}">
                                 <span th:if="${status.index > 0}">, </span>
@@ -126,6 +170,6 @@
     </div>
 </div>
 <th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
-<script th:src="@{/js/sales-cart.js?v=2.0.3}" defer></script>
+<script th:src="@{/js/sales-cart.js?v=2.1.1}" defer></script>
 </body>
 </html>

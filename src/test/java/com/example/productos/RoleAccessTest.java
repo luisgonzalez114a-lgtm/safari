@@ -7,8 +7,11 @@ import com.example.productos.model.Rol;
 import com.example.productos.model.Usuario;
 import com.example.productos.model.Vista;
 import com.example.productos.repository.AuditoriaLogRepository;
+import com.example.productos.repository.EntradaRepository;
+import com.example.productos.repository.ProveedorRepository;
 import com.example.productos.repository.RolRepository;
 import com.example.productos.repository.UsuarioRepository;
+import com.example.productos.service.ProductoRepository;
 import com.example.productos.service.RbacService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +21,16 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,6 +53,15 @@ class RoleAccessTest {
 
     @Autowired
     private AuditoriaLogRepository auditoriaLogRepository;
+
+    @Autowired
+    private ProveedorRepository proveedorRepository;
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    @Autowired
+    private EntradaRepository entradaRepository;
 
     @Autowired
     private RbacService rbacService;
@@ -93,12 +108,42 @@ class RoleAccessTest {
         mockMvc.perform(get("/entradas").session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Es un producto nuevo"))));
         mockMvc.perform(get("/api/entradas").session(session)).andExpect(status().isOk());
         mockMvc.perform(get("/api/proveedores").session(session)).andExpect(status().isForbidden());
         mockMvc.perform(get("/usuarios").session(session))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void sellerCannotCreateCatalogProductByPostingNewReceiptLineDirectly() throws Exception {
+        String code = "SELLER-NEW-" + UUID.randomUUID();
+        long receiptCountBefore = entradaRepository.count();
+        Integer supplierId = proveedorRepository.findAll().get(0).getId();
+
+        mockMvc.perform(post("/entradas/guardar")
+                        .session(sessionForRole("VENDEDOR"))
+                        .param("proveedorId", supplierId.toString())
+                        .param("tipoProducto", "NUEVO")
+                        .param("productoId", "")
+                        .param("codigoNuevo", code)
+                        .param("nombreNuevo", "Producto no autorizado")
+                        .param("descripcionNueva", "")
+                        .param("marcaIdNueva", "")
+                        .param("categoriaIdNueva", "")
+                        .param("precioVentaNuevo", "10.00")
+                        .param("stockMinimoNuevo", "0")
+                        .param("cantidad", "1")
+                        .param("precioCompra", "5.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/entradas"))
+                .andExpect(flash().attributeExists("error"));
+
+        assertEquals(receiptCountBefore, entradaRepository.count());
+        assertFalse(productoRepository.existsByCodigoIgnoreCase(code));
     }
 
     @Test

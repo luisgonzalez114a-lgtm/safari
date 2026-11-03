@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar cliente · SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.0}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('users')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Usuarios</h1>
+            <small>Registrar cliente de la venta</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+
+    <main class="panel customer-registration-form-panel">
+        <span class="eyebrow">NUEVO CLIENTE</span>
+        <h2>Añadir usuario al sistema</h2>
+        <p class="muted-copy">
+            Completa los datos para crear su cuenta. Al finalizar volverás al comprobante de la venta.
+            El bono del 5% quedará disponible para su primera compra registrada.
+        </p>
+        <div class="alert-box" th:if="${error != null}" th:text="${error}"></div>
+        <form th:action="@{/usuarios/guardar-cliente}" method="post" class="form-grid" autocomplete="off">
+            <input type="hidden" name="ventaId" th:value="${ventaId}">
+            <div class="field">
+                <label for="cliente-nombre">Nombre completo</label>
+                <input id="cliente-nombre" type="text" name="nombre" maxlength="100" required>
+            </div>
+            <div class="field">
+                <label for="cliente-correo">Correo electrónico</label>
+                <input id="cliente-correo" type="email" name="correo" maxlength="100" autocomplete="email" required>
+            </div>
+            <div class="field">
+                <label for="cliente-telefono">Teléfono (opcional)</label>
+                <input id="cliente-telefono" type="tel" name="telefono" maxlength="20" autocomplete="tel">
+            </div>
+            <div class="field">
+                <label for="cliente-clave">Contraseña</label>
+                <input id="cliente-clave" type="password" name="clave" minlength="8" maxlength="72"
+                       autocomplete="new-password" required>
+                <small>Usa al menos 8 caracteres.</small>
+            </div>
+            <button class="btn btn-primary" type="submit">Registrar cliente y volver al comprobante</button>
+            <a class="btn btn-secondary" th:href="@{/salidas/{id}/comprobante(id=${ventaId})}">
+                Omitir registro y abrir comprobante
+            </a>
+        </form>
+    </main>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

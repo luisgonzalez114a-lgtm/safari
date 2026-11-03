@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar cliente · SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.0}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/navigation :: sidebar('sales')}"></aside>
+    <header class="topbar">
+        <div class="brand">
+            <h1>Venta registrada</h1>
+            <small th:text="${'Comprobante #' + salida.id}">Comprobante</small>
+        </div>
+        <div th:replace="~{fragments/navigation :: userMenu}"></div>
+    </header>
+
+    <main class="panel customer-registration-question">
+        <span class="eyebrow">CLIENTE NO REGISTRADO</span>
+        <h2>¿Quieres registrar este usuario en el sistema?</h2>
+        <p>
+            La venta ya quedó guardada con los datos proporcionados. Si lo registras ahora,
+            podrás seleccionarlo en futuras ventas y recibirá un bono del 5% para su primera compra registrada.
+        </p>
+        <dl class="customer-sale-summary">
+            <div><dt>Cliente</dt><dd th:text="${salida.clienteNombre}">Nombre</dd></div>
+            <div><dt>Total</dt><dd th:text="${'$' + #numbers.formatDecimal(salida.montoTotal, 1, 2)}">$0.00</dd></div>
+        </dl>
+        <div class="customer-registration-actions">
+            <form th:action="@{/salidas/{id}/registrar-cliente(id=${salida.id})}" method="post">
+                <button class="btn btn-primary" type="submit">Sí, ir a Usuarios</button>
+            </form>
+            <a class="btn btn-secondary" th:href="@{/salidas/{id}/comprobante(id=${salida.id})}">
+                No, ir al comprobante
+            </a>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+</body>
+</html>

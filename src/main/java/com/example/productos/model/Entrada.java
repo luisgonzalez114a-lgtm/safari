@@ -21,6 +21,9 @@ public class Entrada {
     @Column(name = "fecha_entrada")
     private LocalDateTime fechaEntrada = LocalDateTime.now();
 
+    @Column(name = "referencia_documento", length = 100)
+    private String referenciaDocumento;
+
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
@@ -56,6 +59,14 @@ public class Entrada {
 
     public void setFechaEntrada(LocalDateTime fechaEntrada) {
         this.fechaEntrada = fechaEntrada;
+    }
+
+    public String getReferenciaDocumento() {
+        return referenciaDocumento;
+    }
+
+    public void setReferenciaDocumento(String referenciaDocumento) {
+        this.referenciaDocumento = referenciaDocumento;
     }
 
     public String getObservaciones() {

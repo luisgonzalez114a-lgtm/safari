@@ -88,9 +88,11 @@ public class AuthController {
         cliente.setClave(passwordEncoder.encode(clave));
         cliente.setRoles(java.util.Set.of(rolCliente));
         cliente.setEstatus(1);
+        cliente.setBonoDescuentoDisponible(true);
         usuarioRepository.save(cliente);
         auditService.registrar(null, "REGISTRO_CLIENTE", "usuarios", cliente.getId());
-        attributes.addFlashAttribute("mensaje", "Cuenta creada. Ya puedes iniciar sesión.");
+        attributes.addFlashAttribute("mensaje",
+                "¡Felicidades por tu registro! Has ganado un bono del 5% de descuento para tu primera compra.");
         return "redirect:/login";
     }
 
@@ -119,6 +121,7 @@ public class AuthController {
             usuarioRepository.save(usuario);
         }
         session.setAttribute("usuarioLogueado", usuario);
+        session.setAttribute("safariSoundEvent", "login");
         auditService.registrar(usuario.getId(), "INICIO_SESION", "usuarios", usuario.getId());
         return "redirect:/";
     }

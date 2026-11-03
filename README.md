@@ -50,12 +50,16 @@ La aplicación usa la base de datos `safari`. En phpMyAdmin:
 
 1. Activa MySQL en XAMPP.
 2. Importa `safari.sql` desde la pestaña **Importar**. El script crea y selecciona la base de datos `safari`.
-3. Si ya tienes una base `safari` con datos, **no la elimines ni vuelvas a importar `safari.sql`**. Detén SAFARI y exporta primero un respaldo. En una base antigua que todavía tiene `usuarios.id_rol`, ejecuta primero `migracion_roles_multiples.sql`; después ejecuta `migracion_rbac_auditoria.sql`. La primera conserva los roles actuales en `usuario_roles`; la segunda añade el esquema RBAC/auditoría y es repetible con tablas existentes.
+3. Si ya tienes una base `safari` con datos, **no la elimines ni vuelvas a importar `safari.sql`**. Detén SAFARI y exporta primero un respaldo. En una base antigua que todavía tiene `usuarios.id_rol`, ejecuta primero `migracion_roles_multiples.sql` y después `migracion_rbac_auditoria.sql`. En bases preexistentes, ejecuta `migracion_clientes_ventas_bonos.sql` una sola vez si aún no la aplicaste, y `migracion_entradas_recepcion_completa.sql` para agregar la referencia opcional de factura del proveedor; esta última es segura para volver a ejecutar.
 4. Verifica las credenciales en `src/main/resources/application.properties`. La configuración predeterminada de XAMPP es usuario `root` y contraseña vacía.
 
 `crear_bd_safari.sql` solo crea la base de datos; para crear las tablas, importa `safari.sql`.
 
+Para cargar un catálogo pequeño de demostración para consultorio, ejecuta `demo_inventario_consultorio.sql` en phpMyAdmin. Agrega ocho categorías, 40 productos de muestra y una entrada con un proveedor ficticio; cantidades y precios son referenciales. El script evita duplicar los productos de muestra si se vuelve a ejecutar.
+
 La aplicación valida las tablas al iniciar; no las crea ni las modifica automáticamente. La URL y las credenciales pueden cambiarse con `SAFARI_DB_URL`, `SAFARI_DB_USERNAME` y `SAFARI_DB_PASSWORD`; el puerto web puede cambiarse con `PORT`. Si no defines esas variables, se usan los valores locales de XAMPP indicados abajo.
+
+En **Entradas**, selecciona proveedor y referencia de factura, agrega uno o más productos y registra cantidades y costos. Puedes crear un producto nuevo dentro de una línea; se crea junto con la recepción y su stock solo se incorpora si toda la entrada se guarda correctamente.
 
 ```properties
 SAFARI_DB_URL=jdbc:mysql://localhost:3306/safari?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC

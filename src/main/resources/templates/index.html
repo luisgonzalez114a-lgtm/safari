@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.12}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.2}">
 </head>
-<body>
+<body th:attr="data-sound-event=${safariSoundEvent}">
 <div class="app-shell" th:classappend="${esCliente} ? ' public-shell' : ''">
     <th:block th:if="${!esCliente}">
         <aside th:replace="~{fragments/navigation :: sidebar('inventory')}"></aside>
@@ -110,10 +110,13 @@
             <div class="section-heading-row">
                 <h2 id="inventory-title" th:text="${producto.id != null} ? 'Editar producto' : 'Inventario'">Inventario</h2>
             </div>
+            <p class="muted-copy inventory-stock-guidance">
+                Crea aquí la ficha del producto. El proveedor, el costo de compra y las existencias se registran en una entrada.
+            </p>
             <details class="add-disclosure wide-add-disclosure product-add-disclosure" th:open="${producto.id != null}">
                 <summary class="btn btn-primary">
                     <span aria-hidden="true" th:unless="${producto.id != null}">+</span>
-                    <span th:text="${producto.id != null} ? 'Editar producto' : 'Añadir al inventario'">Añadir al inventario</span>
+                    <span th:text="${producto.id != null} ? 'Editar producto' : 'Crear producto'">Crear producto</span>
                 </summary>
                 <div class="disclosure-content">
                     <form th:action="@{/productos/guardar}" th:object="${producto}" method="post" class="form-grid" autocomplete="off">
@@ -145,16 +148,8 @@
                             </select>
                         </div>
                         <div class="field">
-                            <label>Precio compra</label>
-                            <input type="number" step="0.01" th:field="*{precioCompra}" required />
-                        </div>
-                        <div class="field">
                             <label>Precio actual / venta</label>
                             <input type="number" step="0.01" min="0" th:field="*{precioActual}" required />
-                        </div>
-                        <div class="field">
-                            <label>Stock actual</label>
-                            <input type="number" min="0" th:field="*{stockActual}" required />
                         </div>
                         <div class="field">
                             <label>Stock mínimo</label>
@@ -170,25 +165,36 @@
         </aside>
 
         <main class="panel">
-            <h2 class="section-title">Listado de productos</h2>
+            <div class="section-heading-row">
+                <h2 class="section-title">Listado de productos</h2>
+                <a class="btn btn-secondary inventory-entry-link" th:if="${puedeRegistrarEntrada}"
+                   th:href="@{/entradas}">Registrar entrada de proveedor</a>
+            </div>
+            <div class="inventory-search">
+                <label for="inventory-search-input">Buscar productos</label>
+                <input id="inventory-search-input" type="search" placeholder="Código, nombre o descripción…"
+                       autocomplete="off" aria-controls="inventory-product-rows">
+                <span id="inventory-search-count" class="muted-copy" aria-live="polite"></span>
+            </div>
             <div class="table-wrap">
-                <table class="table table-vcenter data-table inventory-table">
+                <table class="table table-vcenter data-table inventory-table"
+                       th:classappend="${puedeGestionarProducto} ? ' inventory-admin-table' : ' inventory-public-table'">
                     <colgroup th:if="${puedeGestionarProducto}">
-                        <col style="width: 6%">
-                        <col style="width: 12%">
-                        <col style="width: 16%">
-                        <col style="width: 20%">
-                        <col style="width: 17%">
-                        <col style="width: 11%">
-                        <col style="width: 18%">
+                        <col style="width: 7.25%">
+                        <col style="width: 13.04%">
+                        <col style="width: 18.12%">
+                        <col style="width: 18.84%">
+                        <col style="width: 14.49%">
+                        <col style="width: 12.32%">
+                        <col style="width: 15.94%">
                     </colgroup>
                     <colgroup th:unless="${puedeGestionarProducto}">
-                        <col style="width: 6%">
-                        <col style="width: 12%">
-                        <col style="width: 16%">
-                        <col style="width: 20%">
-                        <col style="width: 17%">
-                        <col style="width: 29%">
+                        <col style="width: 7.87%">
+                        <col style="width: 14.17%">
+                        <col style="width: 19.69%">
+                        <col style="width: 20.47%">
+                        <col style="width: 15.75%">
+                        <col style="width: 22.05%">
                     </colgroup>
                     <thead>
                     <tr>
@@ -202,10 +208,14 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:if="${#lists.isEmpty(productos)}">
+                    <tr id="inventory-empty" th:if="${#lists.isEmpty(productos)}">
                         <td class="empty-state" th:colspan="${puedeGestionarProducto} ? 7 : 6">Todavía no hay productos.</td>
                     </tr>
-                    <tr class="inventory-row" th:each="p : ${productos}">
+                    <tr id="inventory-no-results" hidden>
+                        <td class="empty-state" th:colspan="${puedeGestionarProducto} ? 7 : 6">No hay productos que coincidan con la búsqueda.</td>
+                    </tr>
+                    <tr class="inventory-row" th:each="p : ${productos}"
+                        th:attr="data-product-search=${p.codigo + ' ' + p.nombre + ' ' + (p.descripcion != null ? p.descripcion : '') + ' ' + p.id}">
                         <td th:colspan="${puedeGestionarProducto} ? 7 : 6">
                             <details class="inventory-row-details" th:classappend="${puedeGestionarProducto} ? ' inventory-admin-row' : ' inventory-public-row'">
                                 <summary class="inventory-row-summary">
@@ -246,5 +256,6 @@
     </div>
 </div>
 <th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+<script th:src="@{/js/inventory-search.js?v=1.0.1}" defer></script>
 </body>
 </html>

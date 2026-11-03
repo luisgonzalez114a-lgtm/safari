@@ -77,6 +77,7 @@ CREATE TABLE `usuarios` (
   `correo` VARCHAR(100) DEFAULT NULL,
   `clave` VARCHAR(255) NOT NULL,
   `estatus` INT DEFAULT 1,
+  `bono_descuento_disponible` BOOLEAN NOT NULL DEFAULT FALSE,
   `fecha_registro` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -140,6 +141,7 @@ CREATE TABLE `entradas` (
   `id_proveedor` INT NOT NULL,
   `id_usuario` INT NOT NULL,
   `fecha_entrada` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `referencia_documento` VARCHAR(100) DEFAULT NULL,
   `observaciones` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_entradas_proveedor`
@@ -166,6 +168,13 @@ CREATE TABLE `salidas` (
   `id_usuario` INT NOT NULL,
   `fecha_salida` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `monto_total` DECIMAL(18,2) NOT NULL,
+  `subtotal` DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  `monto_descuento` DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  `porcentaje_descuento` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `cliente_usuario_id` INT DEFAULT NULL,
+  `cliente_nombre` VARCHAR(100) DEFAULT NULL,
+  `cliente_telefono` VARCHAR(20) DEFAULT NULL,
+  `cliente_correo` VARCHAR(100) DEFAULT NULL,
   `observaciones` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_salidas_usuario`

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Comprobante de entrada #' + entrada.id + ' - SAFARI'}">Comprobante de entrada - SAFARI</title>
+    <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.1}">
+</head>
+<body class="receipt-body">
+<main class="receipt-page">
+    <nav class="receipt-actions" aria-label="Acciones del comprobante">
+        <a class="btn btn-secondary" th:href="@{/entradas}">Volver a entradas</a>
+        <a class="btn btn-secondary" th:href="@{/#inventory-workspace}">Ver inventario actualizado</a>
+        <button id="print-receipt" class="btn btn-primary" type="button">Imprimir comprobante</button>
+    </nav>
+
+    <article class="receipt-sheet">
+        <header class="receipt-header">
+            <div>
+                <div class="receipt-brand">SAFARI</div>
+                <p>Control de inventario y ventas</p>
+            </div>
+            <div class="receipt-number">
+                <span>COMPROBANTE DE ENTRADA</span>
+                <strong th:text="${'#' + entrada.id}">#1</strong>
+            </div>
+        </header>
+
+        <section class="receipt-meta">
+            <div>
+                <span>Fecha y hora</span>
+                <strong th:text="${entrada.fechaEntrada != null ? #temporals.format(entrada.fechaEntrada, 'dd/MM/yyyy HH:mm') : '—'}">—</strong>
+            </div>
+            <div>
+                <span>Proveedor</span>
+                <strong th:text="${entrada.proveedor.nombre}">Proveedor</strong>
+            </div>
+            <div th:if="${entrada.referenciaDocumento != null}">
+                <span>Factura o documento</span>
+                <strong th:text="${entrada.referenciaDocumento}">—</strong>
+            </div>
+            <div>
+                <span>Registró</span>
+                <strong th:text="${entrada.usuario.nombre}">Usuario</strong>
+            </div>
+        </section>
+
+        <section class="receipt-items">
+            <h1>Detalle de productos recibidos</h1>
+            <table>
+                <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Costo unitario</th>
+                    <th>Importe</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="detalle : ${detallesEntrada}">
+                    <td>
+                        <strong th:text="${detalle.producto.nombre}">Producto</strong>
+                        <small th:text="${detalle.producto.codigo}">Código</small>
+                    </td>
+                    <td th:text="${detalle.cantidad}">1</td>
+                    <td th:text="${'$' + #numbers.formatDecimal(detalle.precioCompra, 1, 2)}">$0.00</td>
+                    <td th:text="${'$' + #numbers.formatDecimal(detalle.precioCompra * detalle.cantidad, 1, 2)}">$0.00</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="receipt-total">
+            <span>Total de la entrada</span>
+            <strong th:text="${'$' + #numbers.formatDecimal(totalEntrada, 1, 2)}">$0.00</strong>
+        </div>
+
+        <section class="receipt-notes" th:if="${entrada.observaciones != null and !entrada.observaciones.isBlank()}">
+            <strong>Observaciones</strong>
+            <p th:text="${entrada.observaciones}"></p>
+        </section>
+
+        <footer class="receipt-footer">
+            <p>Entrada registrada correctamente.</p>
+            <small>Comprobante interno de recepción de mercancía</small>
+        </footer>
+    </article>
+</main>
+<th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+<script th:src="@{/js/receipt-print.js?v=1.0.0}" defer></script>
+</body>
+</html>

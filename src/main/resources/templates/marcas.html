@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marcas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.22}">
 </head>
 <body>
 <div class="app-shell">
@@ -36,7 +36,17 @@
     <section class="panel">
         <h2>Marcas registradas</h2>
         <div class="table-wrap">
-            <table class="table table-vcenter data-table catalog-rows-table brands-table">
+            <table class="table table-vcenter data-table catalog-rows-table brands-table"
+                   th:classappend="${puedeEditar or puedeEliminar} ? ' brands-admin-table' : ' brands-readonly-table'">
+                <colgroup th:if="${puedeEditar or puedeEliminar}">
+                    <col style="width: 16.67%">
+                    <col style="width: 50%">
+                    <col style="width: 33.33%">
+                </colgroup>
+                <colgroup th:unless="${puedeEditar or puedeEliminar}">
+                    <col style="width: 25%">
+                    <col style="width: 75%">
+                </colgroup>
                 <thead>
                 <tr><th>ID</th><th>Marca</th><th th:if="${puedeEditar or puedeEliminar}">Acciones</th></tr>
                 </thead>

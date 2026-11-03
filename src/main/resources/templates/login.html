@@ -5,9 +5,208 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAFARI · Acceso</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.24}">
 </head>
 <body class="login-page">
+<div class="login-scene" aria-hidden="true">
+    <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice" role="presentation">
+        <defs>
+            <linearGradient id="scene-sky" x2="0" y2="1">
+                <stop offset="0" stop-color="#73bce9"/>
+                <stop offset="1" stop-color="#d5f0f7"/>
+            </linearGradient>
+            <linearGradient id="scene-grass" x2="0" y2="1">
+                <stop offset="0" stop-color="#83c957"/>
+                <stop offset="1" stop-color="#3d963f"/>
+            </linearGradient>
+        </defs>
+        <rect class="scene-sky" width="1600" height="1000" fill="url(#scene-sky)"/>
+        <circle cx="1320" cy="320" r="76" class="scene-sun"/>
+        <circle cx="800" cy="90" r="46" class="scene-sun scene-sun-mobile"/>
+        <g class="scene-moon" aria-hidden="true">
+            <circle cx="1260" cy="230" r="54" class="scene-moon-disc"/>
+            <circle cx="1285" cy="207" r="49" class="scene-moon-shadow"/>
+        </g>
+        <g class="scene-moon scene-moon-mobile" aria-hidden="true">
+            <circle cx="800" cy="100" r="42" class="scene-moon-disc"/>
+            <circle cx="819" cy="82" r="38" class="scene-moon-shadow"/>
+        </g>
+        <g class="scene-stars" aria-hidden="true">
+            <circle cx="170" cy="120" r="3" style="--twinkle-delay: .2s"/>
+            <circle cx="300" cy="260" r="2" style="--twinkle-delay: 1.1s"/>
+            <circle cx="430" cy="105" r="3" style="--twinkle-delay: 1.8s"/>
+            <circle cx="570" cy="205" r="2" style="--twinkle-delay: .7s"/>
+            <circle cx="690" cy="100" r="2.5" style="--twinkle-delay: 1.4s"/>
+            <circle cx="820" cy="260" r="3" style="--twinkle-delay: .4s"/>
+            <circle cx="960" cy="135" r="2" style="--twinkle-delay: 2s"/>
+            <circle cx="1100" cy="280" r="2.5" style="--twinkle-delay: .9s"/>
+            <circle cx="1450" cy="155" r="3" style="--twinkle-delay: 1.6s"/>
+            <circle cx="1530" cy="330" r="2" style="--twinkle-delay: .5s"/>
+            <circle cx="220" cy="370" r="2" style="--twinkle-delay: 1.3s"/>
+            <circle cx="740" cy="390" r="2.5" style="--twinkle-delay: .1s"/>
+            <circle cx="1040" cy="390" r="2" style="--twinkle-delay: 1.9s"/>
+            <circle cx="1390" cy="405" r="2.5" style="--twinkle-delay: .8s"/>
+        </g>
+        <g class="scene-cloud">
+            <path d="M100 210c-44 0-48-57-7-68 12-47 82-50 98-7 42-16 74 40 44 69-22 20-99 6-135 6Z"/>
+        </g>
+        <g class="scene-cloud scene-cloud-two">
+            <path d="M420 150c-30 0-33-40-5-48 8-32 57-34 68-5 29-11 51 27 30 47-15 14-68 4-93 6Z"/>
+        </g>
+        <g class="scene-cloud scene-cloud-mobile">
+            <path d="M690 305c-31 0-35-41-5-49 9-34 59-36 71-5 31-12 54 28 32 49-16 15-72 5-98 5Z"/>
+        </g>
+        <g class="scene-wind" aria-hidden="true">
+            <path d="M70 340h205q35 0 35-25t-30-25q-16 0-24 13"/>
+            <path d="M1190 370h205q35 0 35-25t-30-25q-16 0-24 13"/>
+            <path d="M160 790h250q40 0 40-28t-34-28q-18 0-26 15"/>
+            <path d="M1020 850h310q42 0 42-29t-35-29q-19 0-28 15"/>
+        </g>
+        <path d="M0 580q190-190 390-20 170-205 370-30 190-180 410 5 220-220 430-5v470H0Z" class="scene-hill scene-hill-back"/>
+        <path d="M0 670q190-160 390-20 205-190 430-5 220-160 400 0 200-165 380-15v370H0Z" class="scene-hill scene-hill-front"/>
+        <path d="M0 760q220-95 460-5 250-110 490 0 260-115 650-10v255H0Z" class="scene-grass" fill="url(#scene-grass)"/>
+        <path d="M0 870q250-100 520-5 250-90 510-5 270-95 570-4v144H0Z" class="scene-grass-light"/>
+        <g class="scene-fence">
+            <path d="M0 706h1600M0 752h1600" />
+            <path d="M70 680v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98m150-98v98"/>
+        </g>
+        <g class="scene-tree">
+            <path d="M1430 630h34v160h-34z"/>
+            <circle cx="1448" cy="573" r="72"/>
+            <circle cx="1396" cy="615" r="49"/>
+            <circle cx="1490" cy="621" r="48"/>
+        </g>
+        <g class="scene-bush">
+            <circle cx="560" cy="755" r="31"/><circle cx="600" cy="743" r="40"/><circle cx="643" cy="760" r="29"/>
+        </g>
+        <g class="scene-bush scene-bush-two">
+            <circle cx="960" cy="762" r="28"/><circle cx="1000" cy="748" r="38"/><circle cx="1040" cy="762" r="28"/>
+        </g>
+        <g class="farm-animals" aria-hidden="true" style="display:none">
+            <g class="animal animal-dog" transform="translate(95 545)">
+                <ellipse cx="100" cy="233" rx="91" ry="14" class="animal-shadow"/>
+                <g class="animal-tail"><path d="M166 115q62-8 51-57" class="dog-tail"/></g>
+                <g class="animal-legs">
+                    <path d="M43 166q-7 38-3 64h25l5-59m29-2 1 61h26l2-65m35-4 12 65h24l-1-77" class="dog-leg"/>
+                </g>
+                <g class="animal-body">
+                    <path d="M35 111q4-43 56-49h57q40 7 45 45l-8 64q-10 31-45 33H69q-35-9-38-41Z" class="dog-coat"/>
+                    <path d="M85 76q-25 34 3 54 28 11 38-13 4-24-16-43Zm68 9q28 25 6 44-25 10-32-14 2-22 14-30Z" class="dog-spot"/>
+                    <g class="animal-head">
+                        <path d="M50 86Q6 68 19 116q6 29 37 25m111-55q44-18 31 30-6 29-37 25" class="dog-ear"/>
+                        <path d="M58 67q20-25 57-22 47 2 55 42l-7 48q-13 31-52 31-43-1-56-35-12-33 3-64Z" class="dog-head"/>
+                        <ellipse cx="91" cy="108" rx="5" ry="7" class="animal-eye"/><ellipse cx="139" cy="108" rx="5" ry="7" class="animal-eye"/>
+                        <ellipse cx="115" cy="133" rx="34" ry="24" class="dog-muzzle"/>
+                        <ellipse cx="115" cy="123" rx="10" ry="7" class="animal-nose"/>
+                        <path d="M115 130v9m0 0q-12 12-22 0m22 0q12 12 22 0" class="animal-smile"/>
+                        <path d="M95 137q20 13 40 0 0 24-20 24t-20-24Z" class="animal-mouth"/>
+                        <path d="M105 153q10-6 20 0l-2 7q-8 6-16 0Z" class="animal-tongue"/>
+                    </g>
+                </g>
+            </g>
+            <g class="animal animal-cow" transform="translate(365 575)">
+                <ellipse cx="112" cy="207" rx="104" ry="13" class="animal-shadow"/>
+                <g class="animal-tail"><path d="M202 104q45 4 37 58" class="cow-tail"/><path d="m236 158 15 12-17 2" class="cow-tail-tip"/></g>
+                <g class="animal-legs">
+                    <path d="M45 145v58h27l4-60m29 0 2 60h27l2-60m27-2 4 62h27l1-68" class="cow-leg"/>
+                </g>
+                <g class="animal-body">
+                    <path d="M27 86q8-30 48-33h91q42 5 52 38l-8 59q-8 25-42 28H67q-35-4-42-30Z" class="cow-coat"/>
+                    <path d="M57 63q28 0 31 30-5 24-35 22-15-14 4-52Zm89-9q32 8 25 36-8 20-39 15-12-28 14-51Z" class="cow-spot"/>
+                    <g class="animal-head">
+                        <path d="m68 57-7-28q0-12 13-6l22 30m46 4 8-28q0-12-13-6l-22 30" class="cow-horn"/>
+                        <path d="M62 75Q24 47 30 82q5 24 37 24m99-31q38-28 32 7-5 24-37 24" class="cow-ear"/>
+                        <path d="M71 57q23-28 56-22 36 7 43 41l-7 42q-10 28-48 29-39 0-50-30-10-29 6-60Z" class="cow-head"/>
+                        <path d="M79 78q-17-23 4-30 22 0 19 23m42 6q17-23-4-30-22 0-19 23" class="cow-spot"/>
+                        <ellipse cx="94" cy="92" rx="4" ry="6" class="animal-eye"/><ellipse cx="139" cy="92" rx="4" ry="6" class="animal-eye"/>
+                        <ellipse cx="116" cy="119" rx="36" ry="23" class="cow-muzzle"/>
+                        <ellipse cx="103" cy="117" rx="4" ry="6" class="cow-nostril"/><ellipse cx="129" cy="117" rx="4" ry="6" class="cow-nostril"/>
+                        <path d="M116 126q-10 10-20 0m20 0q10 10 20 0" class="animal-smile"/>
+                        <path d="M96 127q20 13 40 0 0 24-20 24t-20-24Z" class="animal-mouth"/>
+                        <path d="M106 143q10-6 20 0l-2 7q-8 6-16 0Z" class="animal-tongue"/>
+                    </g>
+                </g>
+            </g>
+            <g class="animal animal-sheep" transform="translate(775 600)">
+                <ellipse cx="101" cy="188" rx="82" ry="11" class="animal-shadow"/>
+                <g class="animal-tail"><path d="M168 98q27-10 28 11" class="sheep-tail"/></g>
+                <g class="animal-legs">
+                    <path d="m48 131-2 52h18l7-50m25 0v51h19l4-52m27-1 8 52h18l-3-59" class="sheep-leg"/>
+                </g>
+                <g class="animal-body">
+                    <g class="sheep-wool">
+                        <circle cx="59" cy="90" r="29"/><circle cx="82" cy="69" r="33"/><circle cx="115" cy="67" r="35"/><circle cx="148" cy="80" r="32"/><circle cx="164" cy="107" r="28"/><circle cx="139" cy="126" r="31"/><circle cx="103" cy="130" r="34"/><circle cx="69" cy="119" r="31"/>
+                    </g>
+                    <g class="animal-head">
+                        <path d="M66 78q-30-24-31 8 3 19 27 15m74-23q30-24 31 8-3 19-27 15" class="sheep-ear"/>
+                        <ellipse cx="103" cy="99" rx="43" ry="47" class="sheep-face"/>
+                        <ellipse cx="88" cy="97" rx="4" ry="6" class="animal-eye"/><ellipse cx="118" cy="97" rx="4" ry="6" class="animal-eye"/>
+                        <ellipse cx="103" cy="113" rx="7" ry="5" class="animal-nose"/>
+                        <path d="M103 118v5m0 0q-8 8-15 0m15 0q8 8 15 0" class="animal-smile"/>
+                        <path d="M89 123q14 10 28 0 0 19-14 19t-14-19Z" class="animal-mouth"/>
+                        <path d="M96 136q7-4 14 0l-1 6q-6 4-12 0Z" class="animal-tongue"/>
+                    </g>
+                </g>
+            </g>
+            <g class="animal animal-chicken" transform="translate(1080 620)">
+                <ellipse cx="84" cy="168" rx="67" ry="10" class="animal-shadow"/>
+                <g class="animal-tail"><path d="M127 83q35-40 41-4-7 19-29 20m20-20q28-25 29 5-8 17-28 17" class="chicken-tail"/></g>
+                <g class="animal-legs">
+                    <path d="M70 128v31m29-32 2 32m-32-1-11 9m11-9 10 9m11-9-10 9m10-9 11 9" class="chicken-leg"/>
+                </g>
+                <g class="animal-body">
+                    <ellipse cx="91" cy="103" rx="55" ry="55" class="chicken-body"/>
+                    <g class="animal-head">
+                        <path d="M71 50q-13-28 1-28 13 8 17 22 9-30 19-17 4 14-4 25" class="chicken-comb"/>
+                        <circle cx="92" cy="61" r="35" class="chicken-head"/>
+                        <circle cx="80" cy="61" r="4" class="animal-eye"/>
+                        <path d="m119 66 27 8-27 9q8-9 0-17Z" class="chicken-beak"/>
+                        <path d="M116 83q20-5 18 13-8 13-19 2" class="chicken-wattle"/>
+                        <path d="M83 76q11 8 22 0 0 20-11 20t-11-20Z" class="animal-mouth"/>
+                        <path d="M88 91q6-4 12 0l-1 5q-5 4-10 0Z" class="animal-tongue"/>
+                    </g>
+                    <path d="M40 104q25-31 47-4-21 6-35 24m68-20q-23-31-45-4 21 6 35 24" class="chicken-wing"/>
+                </g>
+            </g>
+            <g class="animal animal-cat" transform="translate(1320 585)">
+                <ellipse cx="88" cy="200" rx="72" ry="11" class="animal-shadow"/>
+                <g class="animal-tail"><path d="M145 123q65-9 38 45-12 20-34 6" class="cat-tail"/></g>
+                <g class="animal-legs">
+                    <path d="m47 145-4 48h21l7-44m30 0 1 44h21l3-51m22-2 8 53h21l-3-61" class="cat-leg"/>
+                </g>
+                <g class="animal-body">
+                    <path d="M32 113q10-35 51-38h41q38 5 47 39l-8 46q-8 25-43 27H77q-37-4-45-31Z" class="cat-coat"/>
+                    <path d="M74 89q13 32 27 44m17-44q-14 32-28 44" class="cat-mark"/>
+                    <g class="animal-head">
+                        <path d="m51 69 5-48q1-8 9-2l29 31m28 0 29-31q8-6 9 2l5 48" class="cat-ear"/>
+                        <path d="M58 48q28-28 61-1 27 23 12 57-11 25-43 25T46 104q-13-31 12-56Z" class="cat-head"/>
+                        <path d="m66 56 6-23 16 17m37 6-6-23-16 17" class="cat-ear-inner"/>
+                        <ellipse cx="77" cy="79" rx="4" ry="6" class="animal-eye"/><ellipse cx="111" cy="79" rx="4" ry="6" class="animal-eye"/>
+                        <path d="m89 91 10 0-5 6Z" class="animal-nose"/>
+                        <path d="M94 97v7m0 0q-9 8-17 0m17 0q9 8 17 0" class="animal-smile"/>
+                        <path d="M80 104q14 9 28 0 0 18-14 18t-14-18Z" class="animal-mouth"/>
+                        <path d="M87 116q7-4 14 0l-1 5q-6 4-12 0Z" class="animal-tongue"/>
+                        <path d="m72 96-28-5m28 12-30 5m80-12 28-5m-28 12 30 5" class="cat-whiskers"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+        <g class="scene-flower">
+            <path d="M220 870v-35m0 22-13-10m13 4 13-12"/><circle cx="220" cy="827" r="7"/>
+            <path d="M700 901v-35m0 22-13-10m13 4 13-12"/><circle cx="700" cy="858" r="7"/>
+            <path d="M1160 885v-35m0 22-13-10m13 4 13-12"/><circle cx="1160" cy="842" r="7"/>
+        </g>
+        <g class="scene-fireflies" aria-hidden="true">
+            <circle cx="250" cy="760" r="4" style="--fly-delay: .2s"/>
+            <circle cx="390" cy="840" r="3" style="--fly-delay: 1.3s"/>
+            <circle cx="680" cy="790" r="4" style="--fly-delay: .7s"/>
+            <circle cx="840" cy="890" r="3" style="--fly-delay: 1.8s"/>
+            <circle cx="1110" cy="785" r="4" style="--fly-delay: .4s"/>
+            <circle cx="1280" cy="870" r="3" style="--fly-delay: 1.1s"/>
+            <circle cx="1480" cy="790" r="4" style="--fly-delay: 1.6s"/>
+        </g>
+    </svg>
+</div>
 <div class="login-card">
     <div class="login-mark" aria-hidden="true">S</div>
     <div class="login-header">

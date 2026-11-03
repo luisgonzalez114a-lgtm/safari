@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entradas - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.1.0}">
 </head>
 <body>
 <div class="app-shell">
@@ -25,15 +25,15 @@
         <section class="panel">
             <div class="section-heading-row">
                 <div>
-                    <h2>Entradas de mercancía</h2>
-                    <p class="muted-copy">Cada registro actualiza las existencias y guarda su proveedor.</p>
+                    <h2>Registrar recepción</h2>
+                    <p class="muted-copy">El producto y la entrada se guardan juntos; al completar la recepción, las existencias aparecen en Inventario.</p>
                 </div>
             </div>
             <details class="add-disclosure wide-add-disclosure">
-                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Registrar entrada</summary>
+                <summary class="btn btn-primary"><span aria-hidden="true">+</span> Nueva entrada de proveedor</summary>
                 <div class="disclosure-content">
-                    <p class="muted-copy">Cada línea registra proveedor, producto, cantidad y costo. El inventario se incrementa al guardar.</p>
-                    <form th:action="@{/entradas/guardar}" method="post" class="form-grid" autocomplete="off">
+                    <p class="muted-copy">Puedes recibir varios productos en una misma factura. Si uno aún no está en el catálogo, créalo desde su línea.</p>
+                    <form id="goods-receipt-form" th:action="@{/entradas/guardar}" method="post" class="form-grid" autocomplete="off">
                         <div class="field">
                             <label for="proveedorId">Proveedor</label>
                             <select id="proveedorId" name="proveedorId" required>
@@ -43,48 +43,162 @@
                             <small th:if="${#lists.isEmpty(proveedores)}" class="field-help">El administrador debe registrar un proveedor primero.</small>
                         </div>
                         <div class="field">
-                            <label for="productoId">Producto</label>
-                            <select id="productoId" name="productoId" required>
-                                <option value="">Selecciona producto</option>
-                                <option th:each="p : ${productos}" th:value="${p.id}" th:text="${p.codigo + ' · ' + p.nombre}"></option>
-                            </select>
+                            <label for="referenciaDocumento">N.º de factura o documento (opcional)</label>
+                            <input id="referenciaDocumento" type="text" name="referenciaDocumento" maxlength="100">
                         </div>
-                        <div class="field">
-                            <label for="cantidad">Cantidad recibida</label>
-                            <input id="cantidad" type="number" name="cantidad" min="1" value="1" required>
+
+                        <div id="receipt-lines" class="receipt-lines">
+                            <section class="receipt-line" data-receipt-line>
+                                <div class="receipt-line-heading">
+                                    <h3>Producto recibido</h3>
+                                    <button class="btn btn-danger btn-sm" type="button" data-remove-receipt-line>Quitar</button>
+                                </div>
+                                <div class="receipt-line-fields">
+                                    <div class="field">
+                                        <label>Tipo de producto</label>
+                                        <select name="tipoProducto" data-product-type>
+                                            <option value="EXISTENTE">Ya está en el catálogo</option>
+                                            <option value="NUEVO" th:if="${puedeCrearProducto}">Es un producto nuevo</option>
+                                        </select>
+                                    </div>
+                                    <div class="field" data-existing-product>
+                                        <label>Producto del catálogo</label>
+                                        <select name="productoId" data-existing-select required>
+                                            <option value="">Selecciona producto</option>
+                                            <option th:each="p : ${productos}" th:value="${p.id}" th:text="${p.codigo + ' · ' + p.nombre}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="receipt-new-product" data-new-product hidden>
+                                        <div class="field">
+                                            <label>Código</label>
+                                            <input name="codigoNuevo" type="text" maxlength="50" data-new-required>
+                                        </div>
+                                        <div class="field">
+                                            <label>Nombre del producto</label>
+                                            <input name="nombreNuevo" type="text" maxlength="100" data-new-required>
+                                        </div>
+                                        <div class="field">
+                                            <label>Descripción (opcional)</label>
+                                            <input name="descripcionNueva" type="text" maxlength="10000">
+                                        </div>
+                                        <div class="field">
+                                            <label>Marca (opcional)</label>
+                                            <select name="marcaIdNueva">
+                                                <option value="">Sin marca</option>
+                                                <option th:each="marca : ${marcas}" th:value="${marca.id}" th:text="${marca.nombre}"></option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label>Categoría (opcional)</label>
+                                            <select name="categoriaIdNueva">
+                                                <option value="">Sin categoría</option>
+                                                <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nombre}"></option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label>Precio de venta</label>
+                                            <input name="precioVentaNuevo" type="number" min="0" step="0.01" data-new-required>
+                                        </div>
+                                        <div class="field">
+                                            <label>Stock mínimo</label>
+                                            <input name="stockMinimoNuevo" type="number" min="0" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label>Cantidad recibida</label>
+                                        <input name="cantidad" type="number" min="1" value="1" required>
+                                    </div>
+                                    <div class="field">
+                                        <label>Costo unitario de compra</label>
+                                        <input name="precioCompra" type="number" min="0" step="0.01" required>
+                                    </div>
+                                </div>
+                            </section>
                         </div>
+                        <button id="add-receipt-line" class="btn btn-secondary" type="button">+ Agregar producto</button>
                         <div class="field">
-                            <label for="precioCompra">Costo unitario</label>
-                            <input id="precioCompra" type="number" name="precioCompra" min="0" step="0.01" required>
-                        </div>
-                        <div class="field">
-                            <label for="observaciones">Observaciones</label>
+                            <label for="observaciones">Observaciones (opcional)</label>
                             <input id="observaciones" type="text" name="observaciones" maxlength="1000">
                         </div>
-                        <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(proveedores) or #lists.isEmpty(productos)}">Registrar entrada</button>
+                        <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(proveedores)}">Registrar entrada y actualizar inventario</button>
                     </form>
                 </div>
             </details>
         </section>
 
         <section class="panel">
-            <h2>Historial de entradas</h2>
-            <div class="table-wrap">
+            <div class="entry-history-heading">
+                <h2>Historial de entradas</h2>
+                <div class="entry-view-controls" role="group" aria-label="Vista del historial de entradas">
+                    <button class="btn btn-secondary is-active" type="button" data-entry-view="grid"
+                            aria-pressed="true" aria-controls="entry-history-grid">Cuadrícula</button>
+                    <button class="btn btn-secondary" type="button" data-entry-view="rows"
+                            aria-pressed="false" aria-controls="entry-history-rows">Filas</button>
+                </div>
+            </div>
+            <div id="entry-history-grid" class="entry-history-grid" data-entry-history-view="grid">
+                <article class="entry-history-card" th:each="resumen : ${entradasResumen}">
+                    <header class="entry-history-card-header">
+                        <div>
+                            <span class="entry-card-label">Proveedor</span>
+                            <h3 th:text="${resumen.entrada.proveedor.nombre}">Proveedor</h3>
+                        </div>
+                        <a class="btn btn-secondary btn-sm"
+                           th:href="@{/entradas/{id}/comprobante(id=${resumen.entrada.id})}">Ver recibo</a>
+                    </header>
+                    <div class="entry-card-meta">
+                        <span th:text="${resumen.entrada.fechaEntrada != null ? #temporals.format(resumen.entrada.fechaEntrada, 'dd/MM/yyyy HH:mm') : '—'}">Fecha</span>
+                        <span th:if="${resumen.entrada.referenciaDocumento != null}"
+                              th:text="${'Doc. ' + resumen.entrada.referenciaDocumento}">Documento</span>
+                    </div>
+                    <dl class="entry-card-totals">
+                        <div><dt>Productos</dt><dd th:text="${#lists.size(resumen.detalles)}">0</dd></div>
+                        <div><dt>Unidades</dt><dd th:text="${resumen.totalCantidad}">0</dd></div>
+                        <div><dt>Total recibido</dt><dd class="price-cell" th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 2)}">$0.00</dd></div>
+                    </dl>
+                    <details class="entry-products-details">
+                        <summary>Ver productos recibidos</summary>
+                        <ul class="entry-product-list">
+                            <li th:each="detalle : ${resumen.detalles}"
+                                th:text="${detalle.producto.codigo + ' · ' + detalle.producto.nombre + ' — ' + detalle.cantidad + ' u.'}"></li>
+                        </ul>
+                    </details>
+                    <footer class="entry-card-footer">
+                        <span>Registró</span>
+                        <strong th:text="${resumen.entrada.usuario.nombre}">Usuario</strong>
+                    </footer>
+                </article>
+                <p class="empty-state" th:if="${#lists.isEmpty(entradasResumen)}">Todavía no hay entradas registradas.</p>
+            </div>
+            <div id="entry-history-rows" class="table-wrap" data-entry-history-view="rows" hidden>
                 <table class="table table-vcenter data-table">
                     <thead>
-                    <tr><th>Fecha</th><th>Proveedor</th><th>Producto</th><th>Cantidad</th><th>Costo unitario</th><th>Registró</th></tr>
+                    <tr><th>Fecha</th><th>Proveedor / documento</th><th>Productos recibidos</th><th>Unidades</th><th>Total</th><th>Registró</th><th>Comprobante</th></tr>
                     </thead>
                     <tbody>
-                    <tr th:if="${#lists.isEmpty(detalles)}">
-                        <td class="empty-state" colspan="6">Todavía no hay entradas registradas.</td>
+                    <tr th:if="${#lists.isEmpty(entradasResumen)}">
+                        <td class="empty-state" colspan="7">Todavía no hay entradas registradas.</td>
                     </tr>
-                    <tr th:each="d : ${detalles}">
-                        <td th:text="${d.entrada.fechaEntrada != null ? #temporals.format(d.entrada.fechaEntrada, 'dd/MM/yyyy HH:mm') : '—'}"></td>
-                        <td th:text="${d.entrada.proveedor.nombre}"></td>
-                        <td th:text="${d.producto.codigo + ' · ' + d.producto.nombre}"></td>
-                        <td th:text="${d.cantidad}"></td>
-                        <td class="price-cell" th:text="${#numbers.formatDecimal(d.precioCompra, 1, 2)}"></td>
-                        <td th:text="${d.entrada.usuario.nombre}"></td>
+                    <tr th:each="resumen : ${entradasResumen}">
+                        <td th:text="${resumen.entrada.fechaEntrada != null ? #temporals.format(resumen.entrada.fechaEntrada, 'dd/MM/yyyy HH:mm') : '—'}"></td>
+                        <td>
+                            <strong th:text="${resumen.entrada.proveedor.nombre}"></strong>
+                            <small class="entry-reference" th:if="${resumen.entrada.referenciaDocumento != null}"
+                                   th:text="${'Doc. ' + resumen.entrada.referenciaDocumento}"></small>
+                        </td>
+                        <td>
+                            <details class="entry-products-details">
+                                <summary th:text="${#lists.size(resumen.detalles) + ' productos — ver detalle'}">Ver productos</summary>
+                                <ul class="entry-product-list">
+                                <li th:each="detalle : ${resumen.detalles}"
+                                    th:text="${detalle.producto.codigo + ' · ' + detalle.producto.nombre + ' — ' + detalle.cantidad + ' u.'}"></li>
+                                </ul>
+                            </details>
+                        </td>
+                        <td th:text="${resumen.totalCantidad}"></td>
+                        <td class="price-cell" th:text="${'$' + #numbers.formatDecimal(resumen.total, 1, 2)}"></td>
+                        <td th:text="${resumen.entrada.usuario.nombre}"></td>
+                        <td><a class="btn btn-secondary btn-sm" th:href="@{/entradas/{id}/comprobante(id=${resumen.entrada.id})}">Ver recibo</a></td>
                     </tr>
                     </tbody>
                 </table>
@@ -93,5 +207,6 @@
     </div>
 </div>
 <th:block th:replace="~{fragments/navigation :: pageLoader}"></th:block>
+<script th:src="@{/js/entries-form.js?v=1.1.0}" defer></script>
 </body>
 </html>

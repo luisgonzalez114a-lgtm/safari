@@ -3,6 +3,7 @@ package com.example.productos.service;
 import com.example.productos.model.Producto;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,8 @@ public class ProductoService {
     }
 
     public Producto crear(Producto producto) {
+        producto.setStockActual(0);
+        producto.setPrecioCompra(BigDecimal.ZERO);
         return productoRepository.save(producto);
     }
 
@@ -44,9 +47,7 @@ public class ProductoService {
         existente.setDescripcion(datos.getDescripcion());
         existente.setIdMarca(datos.getIdMarca());
         existente.setIdCategoria(datos.getIdCategoria());
-        existente.setPrecioCompra(datos.getPrecioCompra());
         existente.setPrecioActual(datos.getPrecioActual());
-        existente.setStockActual(datos.getStockActual());
         existente.setStockMinimo(datos.getStockMinimo());
         return productoRepository.save(existente);
     }

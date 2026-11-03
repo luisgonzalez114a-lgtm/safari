@@ -44,6 +44,11 @@ public class ProductoWebController {
     @GetMapping("/")
     public String listar(Model model, HttpSession session) {
         Usuario usuario = (Usuario) session.getAttribute("usuarioLogueado");
+        Object soundEvent = session.getAttribute("safariSoundEvent");
+        session.removeAttribute("safariSoundEvent");
+        if (soundEvent != null) {
+            model.addAttribute("safariSoundEvent", soundEvent);
+        }
         model.addAttribute("usuarioLogueado", usuario);
         model.addAttribute("esAdmin", esAdmin(usuario));
         model.addAttribute("esVendedor", esVendedor(usuario));
@@ -54,6 +59,9 @@ public class ProductoWebController {
         model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
         model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));
         model.addAttribute("puedeEliminarProducto", puede(usuario, "/inventario", RbacService.ELIMINAR));
+        model.addAttribute("puedeRegistrarEntrada",
+                puede(usuario, "/entradas", RbacService.CONSULTAR)
+                        && puede(usuario, "/entradas", RbacService.CREAR));
         model.addAttribute("puedeGestionarProducto",
                 puede(usuario, "/inventario", RbacService.CREAR)
                         || puede(usuario, "/inventario", RbacService.EDITAR)
@@ -103,6 +111,9 @@ public class ProductoWebController {
         model.addAttribute("puedeCrearProducto", puede(usuario, "/inventario", RbacService.CREAR));
         model.addAttribute("puedeEditarProducto", puede(usuario, "/inventario", RbacService.EDITAR));
         model.addAttribute("puedeEliminarProducto", puede(usuario, "/inventario", RbacService.ELIMINAR));
+        model.addAttribute("puedeRegistrarEntrada",
+                puede(usuario, "/entradas", RbacService.CONSULTAR)
+                        && puede(usuario, "/entradas", RbacService.CREAR));
         model.addAttribute("puedeGestionarProducto", true);
         var producto = productoService.listar().stream().filter(p -> p.getId().equals(id))
                 .findFirst().orElse(new Producto());
@@ -144,13 +155,7 @@ public class ProductoWebController {
         if (producto.getNombre() == null || producto.getNombre().isBlank()) {
             return false;
         }
-        if (producto.getPrecioCompra() == null || producto.getPrecioCompra().compareTo(BigDecimal.ZERO) < 0) {
-            return false;
-        }
         if (producto.getPrecioActual() == null || producto.getPrecioActual().compareTo(BigDecimal.ZERO) < 0) {
-            return false;
-        }
-        if (producto.getStockActual() == null || producto.getStockActual() < 0) {
             return false;
         }
         if (producto.getStockMinimo() == null || producto.getStockMinimo() < 0) {

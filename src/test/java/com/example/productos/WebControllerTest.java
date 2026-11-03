@@ -35,6 +35,14 @@ class WebControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("admin@safari.com")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("admin123")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Ver productos disponibles")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("login-scene")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("animal-dog")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("animal-cow")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("animal-sheep")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("animal-chicken")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("animal-cat")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("scene-grass")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"animal-mouth\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/\"")));
     }
 
@@ -56,13 +64,41 @@ class WebControllerTest {
         mockMvc.perform(get("/").session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("SAFARI")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Añadir al inventario")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Crear producto")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Registrar entrada de proveedor")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("El proveedor, el costo de compra y las existencias se registran en una entrada.")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("name=\"stockActual\""))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("name=\"precioCompra\""))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-layout")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("wide-add-disclosure")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-table")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("width: 20%")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"inventory-search-input\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-product-search=")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-sound-toggle")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("safari-sounds.js")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-admin-table")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-row-details")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Inventario")));
+    }
+
+    @Test
+    void successfulLoginSchedulesOneLoginSoundEvent() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/login")
+                        .session(session)
+                        .param("correo", "admin@safari.com")
+                        .param("clave", "admin123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/"));
+
+        mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-sound-event=\"login\"")));
+
+        mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("data-sound-event=\"login\""))));
     }
 
     @Test

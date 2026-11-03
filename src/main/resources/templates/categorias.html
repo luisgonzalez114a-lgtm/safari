@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Categorías - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.3}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.11}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.22}">
 </head>
 <body>
 <div class="app-shell">
@@ -37,7 +37,19 @@
     <section class="panel">
         <h2>Categorías registradas</h2>
         <div class="table-wrap">
-            <table class="table table-vcenter data-table catalog-rows-table categories-table">
+            <table class="table table-vcenter data-table catalog-rows-table categories-table"
+                   th:classappend="${puedeEditar or puedeEliminar} ? ' categories-admin-table' : ' categories-readonly-table'">
+                <colgroup th:if="${puedeEditar or puedeEliminar}">
+                    <col style="width: 10.64%">
+                    <col style="width: 25.53%">
+                    <col style="width: 42.55%">
+                    <col style="width: 21.28%">
+                </colgroup>
+                <colgroup th:unless="${puedeEditar or puedeEliminar}">
+                    <col style="width: 13.51%">
+                    <col style="width: 32.43%">
+                    <col style="width: 54.06%">
+                </colgroup>
                 <thead>
                 <tr><th>ID</th><th>Categoría</th><th>Descripción</th><th th:if="${puedeEditar or puedeEliminar}">Acciones</th></tr>
                 </thead>

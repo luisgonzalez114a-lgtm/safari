@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuarios - SAFARI</title>
     <link rel="stylesheet" th:href="@{/css/tabler.min.css?v=1.6.2}">
-    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.12}">
+    <link rel="stylesheet" th:href="@{/css/styles.css?v=2.0.22}">
 </head>
 <body>
 <div class="app-shell">
@@ -99,6 +99,15 @@
 
         <div class="table-wrap" th:unless="${usuariosPagina.isEmpty()}">
             <table class="table table-vcenter data-table users-table">
+                <colgroup>
+                    <col style="width: 5.84%">
+                    <col style="width: 16.23%">
+                    <col style="width: 22.08%">
+                    <col style="width: 12.99%">
+                    <col style="width: 12.99%">
+                    <col style="width: 11.69%">
+                    <col style="width: 18.18%">
+                </colgroup>
                 <thead>
                 <tr>
                     <th>ID</th>
